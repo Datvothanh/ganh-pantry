@@ -273,15 +273,24 @@
 
 /* ---------- card grid ---------- */
 
+/* Sized to the item count (--n set inline): cards fill the row up to a max
+   width and the row is centred, so 1-3 products never leave a dead zone. */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  --cols: min(var(--n, 4), 4);
+  --card-max: clamp(300px, 28vw, 560px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--gap);
   margin-top: var(--space-l);
 }
 
-.card {
-  width: 100%;
+.grid .card {
+  flex: none;
+  width: min(
+    calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols)),
+    var(--card-max)
+  );
 }
 
 /* ---------- sauces: dark full-bleed ---------- */
@@ -569,7 +578,7 @@
   }
 
   .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    --cols: min(var(--n, 3), 3);
   }
 
   .outro {
@@ -584,7 +593,8 @@
 
 @media (max-width: 640px) {
   .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --cols: min(var(--n, 2), 2);
+    --card-max: 100%;
   }
 
   .card .cardJar {

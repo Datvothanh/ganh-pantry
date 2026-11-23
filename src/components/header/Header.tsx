@@ -80,7 +80,7 @@ export function Header({ locale }: { locale: Locale }) {
           <LangSwitch locale={locale} label={t.header.languages} tone={dark ? "dark" : "light"} />
         </div>
         <Link href={href(locale, "/")} className={styles.logo} aria-label={t.header.home}>
-          <Logo />
+          <Logo locale={locale} />
         </Link>
         <div className={styles.right}>
           <button

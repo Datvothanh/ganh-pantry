@@ -22,6 +22,14 @@ interface Pose {
   rot: number;
 }
 
+/** One parsed filter function (e.g. `blur(2px)`) and the value that means "no effect". */
+interface FilterPart {
+  name: string;
+  value: number;
+  unit: string;
+  rest: number;
+}
+
 interface Flight {
   handle: string;
   clone: HTMLDivElement;
@@ -29,6 +37,8 @@ interface Flight {
   w: number;
   h: number;
   from: Pose;
+  /** Source filter at launch, eased to none over the flight. */
+  filter: FilterPart[];
   target: HTMLElement | null;
   ready: boolean;
   launched: number;
@@ -62,6 +72,38 @@ function screenPose(el: HTMLElement): { rot: number; scale: number } {
     scale *= Math.hypot(m.a, m.b);
   }
   return { rot, scale };
+}
+
+const FILTER_REST: Record<string, number> = {
+  brightness: 1,
+  contrast: 1,
+  saturate: 1,
+  opacity: 1,
+  grayscale: 0,
+  sepia: 0,
+  invert: 0,
+  blur: 0,
+  "hue-rotate": 0,
+};
+
+/** Parse a computed `filter`; null when it holds anything we cannot ease (e.g. drop-shadow). */
+function parseFilter(value: string): FilterPart[] | null {
+  const parts: FilterPart[] = [];
+  const re = /([a-z-]+)\(\s*(-?[\d.]+)([a-z%]*)\s*\)/g;
+  let end = 0;
+  for (let m = re.exec(value); m; m = re.exec(value)) {
+    if (value.slice(end, m.index).trim() || !(m[1] in FILTER_REST)) return null;
+    parts.push({ name: m[1], value: parseFloat(m[2]), unit: m[3], rest: FILTER_REST[m[1]] });
+    end = re.lastIndex;
+  }
+  return value.slice(end).trim() ? null : parts;
+}
+
+function setFilter(f: Flight, e: number) {
+  if (!f.filter.length) return;
+  f.clone.style.filter = f.filter
+    .map((p) => `${p.name}(${(p.value + (p.rest - p.value) * e).toFixed(3)}${p.unit})`)
+    .join(" ");
 }
 
 function place(f: Flight, p: Pose) {
@@ -126,6 +168,7 @@ function frame(f: Flight, now: number) {
   const to: Pose = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, scale: r.height / f.h, rot: 0 };
   const t = Math.min(1, (now - f.flyStart) / DURATION);
   const e = easeInOut(t);
+  setFilter(f, e);
   place(f, {
     cx: f.from.cx + (to.cx - f.from.cx) * e,
     cy: f.from.cy + (to.cy - f.from.cy) * e,
@@ -159,8 +202,14 @@ export function launchJarFlight(source: HTMLElement, handle: string): boolean {
     ...screenPose(source),
   };
 
+  // The slider depth-filters its items (brightness, blur): the clone starts with the same look.
+  const srcFilter = getComputedStyle(source).filter;
+  const hasFilter = !!srcFilter && srcFilter !== "none";
+  const filter = hasFilter ? parseFilter(srcFilter) : [];
+
   const clone = document.createElement("div");
   clone.className = classes.clone ?? "";
+  if (hasFilter) clone.style.filter = srcFilter;
   clone.setAttribute("data-jar-flight-clone", "");
   clone.setAttribute("aria-hidden", "true");
   clone.style.width = `${w}px`;
@@ -195,6 +244,7 @@ export function launchJarFlight(source: HTMLElement, handle: string): boolean {
     w,
     h,
     from,
+    filter: filter ?? [],
     target: null,
     ready: false,
     launched: performance.now(),

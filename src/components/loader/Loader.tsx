@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { useLocale } from "@/components/shell/LocaleProvider";
 import { products } from "@/content/products";
 import { gsap } from "@/lib/gsap";
 import { markIntroDone, useIntroDone } from "./intro";
@@ -45,6 +46,7 @@ const SHAPES = products.map((p, i) => {
 
 export function Loader({ label }: { label: string }) {
   const done = useIntroDone();
+  const locale = useLocale();
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export function Loader({ label }: { label: string }) {
           </svg>
         ))}
         <div className={styles.logo} data-loader-logo>
-          <Logo />
+          <Logo locale={locale} />
         </div>
       </div>
     </div>

@@ -3,12 +3,9 @@
   overflow-x: clip;
   --ph-title-fall: 44vh;
   --ph-meta-shift: 0px;
-  --ph-jar-rise: -24vh;
-  --ph-jar-rotate: 20deg;
   --ph-jar-scale-from: 1;
-  --ph-jar-scale-to: 0.8;
-  --ph-jar-w: clamp(220px, 29vw, 600px);
-  --ph-jar-top: 74%;
+  --ph-title-size: clamp(4rem, calc(2.9rem + 9vw), 999999px);
+  /* --ph-jar-w/-top/-rise/-rotate/-scale-to come from .page in ProductPage.module.css. */
 }
 
 .stage {
@@ -29,9 +26,7 @@
   width: 95%;
   margin: 0;
   color: var(--c-red);
-  font-size: calc(
-    clamp(4rem, calc(2.9rem + 9vw), 999999px) * var(--ph-title-fit, 1)
-  );
+  font-size: calc(var(--ph-title-size) * var(--ph-title-fit, 1));
   font-weight: 400;
   line-height: 0.98;
   letter-spacing: -0.015em;
@@ -133,7 +128,7 @@
 .jar {
   position: absolute;
   left: 50%;
-  top: var(--ph-jar-top);
+  top: calc(var(--ph-jar-top) * 100%);
   z-index: 2;
   width: var(--ph-jar-w);
   aspect-ratio: 630 / 1013;
@@ -193,17 +188,63 @@
   object-fit: contain;
 }
 
+/* ---- space below the stage ---- */
+
+/*
+ * The stage is a fixed-height box; the space the jar and meta row need below it is part of the
+ * hero, so the intro starts in the right place before any script runs. The base item holds the
+ * jar clearance (--hero-clear, see ProductPage.module.css; ProductHero swaps in its measured value).
+ * The probe is a half-size, half-width copy of the title (so it wraps like the real one and is half
+ * as tall) pushed to where the meta row ends: its bottom edge is the meta end pose + gap, i.e.
+ * jar centre + half the title + META_GAP + meta height + CLEAR_GAP, the other term of layout().
+ */
+.reserve {
+  display: grid;
+}
+
+.reserveBase,
+.probe {
+  grid-area: 1 / 1;
+}
+
+.reserveBase {
+  height: max(var(--ph-intro-min), var(--hero-clear));
+}
+
+.probe {
+  align-self: start;
+  width: 47.5%;
+  margin: calc(
+      var(--ph-stage-h) * var(--ph-jar-top) + var(--ph-jar-h) / 2 +
+        var(--ph-jar-rise) - var(--ph-stage-h) + 116px + 2.2 *
+        clamp(1.45rem, calc(1rem + 1.05vw), 2.6rem)
+    )
+    auto 0;
+  font-size: calc(var(--ph-title-size) * var(--ph-title-fit, 1) / 2);
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+  text-align: center;
+  text-transform: uppercase;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.probe::before {
+  content: attr(data-title);
+}
+
+@media (max-width: 1024px), (prefers-reduced-motion: reduce) {
+  .probe {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .hero {
-    --ph-jar-scale-to: 0.7;
-    --ph-jar-w: clamp(200px, 40vw, 380px);
-    --ph-jar-top: 64%;
+    --ph-title-size: clamp(3rem, calc(1rem + 11vw), 999999px);
   }
 
   .title {
-    font-size: calc(
-      clamp(3rem, calc(1rem + 11vw), 999999px) * var(--ph-title-fit, 1)
-    );
     line-height: 1.02;
   }
 
@@ -221,14 +262,6 @@
 
   .metaRight {
     display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero {
-    --ph-jar-scale-to: 0.64;
-    --ph-jar-w: 56vw;
-    --ph-jar-top: 60%;
   }
 }
 

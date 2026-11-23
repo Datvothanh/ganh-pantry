@@ -7,12 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { Money } from "@/lib/commerce/types";
 
 export interface BuyVariant {
   id: string;
   weight: string;
   /** Formatted unit price. */
   price: string;
+  /** Unit price as money, for the optimistic cart line. */
+  unitPrice: Money;
   available: boolean;
 }
 
@@ -42,6 +45,7 @@ export function BuyProvider({
   variants: BuyVariant[];
   children: ReactNode;
 }) {
+  // First weight that can be bought; a sold-out first weight is skipped.
   const [variantId, setVariantId] = useState(
     () => (variants.find((v) => v.available) ?? variants[0]).id,
   );

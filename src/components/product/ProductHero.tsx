@@ -165,7 +165,7 @@ export function ProductHero({
     const layout = () => {
       m.style.top = "";
       st.style.removeProperty("--ph-title-rest-y");
-      st.style.removeProperty("--ph-title-fit");
+      root.current?.style.removeProperty("--ph-title-fit");
       const narrow = window.matchMedia("(max-width: 1024px)").matches;
       const header = document.querySelector("[data-site-header]");
       const headerBottom = Math.min(
@@ -179,7 +179,7 @@ export function ProductHero({
       const jarTop = j.offsetTop;
       const bottom = jarTop - TITLE_GAP_JAR;
       if (t.offsetHeight > bottom - top)
-        st.style.setProperty(
+        root.current?.style.setProperty(
           "--ph-title-fit",
           `${Math.max(0.3, (bottom - top) / t.offsetHeight)}`,
         );
@@ -344,6 +344,10 @@ export function ProductHero({
             />
           </div>
         </div>
+      </div>
+      <div className={styles.reserve} aria-hidden="true">
+        <div className={styles.reserveBase} />
+        <div className={styles.probe} data-title={title} lang="vi" />
       </div>
     </section>
   );

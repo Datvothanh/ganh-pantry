@@ -84,7 +84,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 30px;
+  bottom: calc(30px + var(--footer-strip-h, 0px));
   z-index: 3;
   color: var(--c-cream);
   font: 400 13px/1.2 var(--font-display), serif;
@@ -112,7 +112,8 @@
   z-index: 2;
   overflow: hidden;
   cursor: grab;
-  touch-action: none;
+  /* Horizontal drags drive the marquee; vertical swipes stay with the page. */
+  touch-action: pan-y;
 }
 
 .wrap:active {
@@ -182,19 +183,23 @@
   }
 }
 
-/* ---- reduced motion: a plain horizontal row, no transforms ---- */
+/* ---- static layout: a plain horizontal row, no transforms ----
+   Used under reduced motion, and before hydration whenever the boot script did not set
+   html[data-motion] (no JS or reduced motion), so the server HTML is visible on its own. */
 
-.stage[data-static] .wrap {
+.stage[data-static] .wrap,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .wrap {
   display: flex;
   align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
   touch-action: auto;
   cursor: auto;
-  padding: var(--header-h) var(--pad) 70px;
+  padding: var(--header-h) var(--pad) calc(70px + var(--footer-strip-h, 0px));
 }
 
-.stage[data-static] .marquee {
+.stage[data-static] .marquee,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .marquee {
   position: relative;
   left: auto;
   top: auto;
@@ -203,13 +208,15 @@
   transform: none;
 }
 
-.stage[data-static] .track {
+.stage[data-static] .track,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .track {
   display: flex;
   gap: clamp(16px, 3vw, 48px);
   width: max-content;
 }
 
-.stage[data-static] .item {
+.stage[data-static] .item,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .item {
   position: relative;
   top: auto;
   margin: 0;
@@ -222,12 +229,16 @@
 }
 
 .stage[data-static] .prompt,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .prompt,
 .stage[data-static] .shapeLayer,
-.stage[data-static] .badge {
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .shapeLayer,
+.stage[data-static] .badge,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .badge {
   opacity: 1;
   transform: translateX(-50%);
 }
 
-.stage[data-static] .prompt {
+.stage[data-static] .prompt,
+:global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .prompt {
   transform: none;
 }

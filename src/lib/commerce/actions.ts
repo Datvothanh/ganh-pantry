@@ -27,8 +27,11 @@ async function run(fn: (cartId: string | undefined) => Promise<Cart>): Promise<A
     await writeCartId(cart);
     return { ok: true, cart };
   } catch (err) {
-    if (err instanceof CartNotFoundError) (await cookies()).delete(CART_COOKIE);
-    else console.error("[commerce]", err);
+    if (err instanceof CartNotFoundError) {
+      (await cookies()).delete(CART_COOKIE);
+      return { ok: false, error: err.message, gone: true };
+    }
+    console.error("[commerce]", err);
     return { ok: false, error: err instanceof Error ? err.message : "Cart error" };
   }
 }
@@ -40,7 +43,9 @@ export async function getCartAction(): Promise<Cart | null> {
   const id = await readCartId();
   if (!id) return null;
   try {
-    return await commerce.getCart(id);
+    const cart = await commerce.getCart(id);
+    if (!cart) (await cookies()).delete(CART_COOKIE);
+    return cart;
   } catch (err) {
     console.error("[commerce]", err);
     return null;
@@ -63,7 +68,7 @@ export async function updateCartLineAction(lineId: string, quantity: number): Pr
     return { ok: false, error: "Invalid cart request" };
   }
   return run(async (id) => {
-    if (!id) throw new Error("No cart");
+    if (!id) throw new CartNotFoundError();
     return commerce.updateLine(id, lineId, quantity);
   });
 }
@@ -71,7 +76,7 @@ export async function updateCartLineAction(lineId: string, quantity: number): Pr
 export async function removeCartLineAction(lineId: string): Promise<ActionResult> {
   if (typeof lineId !== "string") return { ok: false, error: "Invalid cart request" };
   return run(async (id) => {
-    if (!id) throw new Error("No cart");
+    if (!id) throw new CartNotFoundError();
     return commerce.removeLine(id, lineId);
   });
 }

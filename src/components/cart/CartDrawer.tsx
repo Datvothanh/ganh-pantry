@@ -8,7 +8,7 @@ import { useLenis } from "@/components/motion/SmoothScroll";
 import { useLocale } from "@/components/shell/LocaleProvider";
 import { productByHandle } from "@/content/products";
 import { formatMoney } from "@/lib/commerce/format";
-import type { CartLine } from "@/lib/commerce/types";
+import { MAX_LINE_QUANTITY, type CartLine } from "@/lib/commerce/types";
 import { href } from "@/lib/i18n";
 import { cartCopy } from "./copy";
 import { closeCart, removeLine, setLineQuantity, useCart } from "./store";
@@ -86,6 +86,11 @@ export function CartDrawer() {
   const lines = cart?.lines ?? [];
   const checkoutUrl = cart?.checkoutUrl ?? "/checkout-demo";
   const internal = checkoutUrl.startsWith("/");
+  const alert = error ? (
+    <p className={styles.error} role="alert" data-cart-error>
+      {t.error}
+    </p>
+  ) : null;
 
   return createPortal(
     <div className={styles.root} data-cart-root data-state={open ? "open" : "closed"}>
@@ -113,6 +118,7 @@ export function CartDrawer() {
           <div className={styles.empty} data-cart-empty>
             <p className={styles.emptyTitle}>{t.empty}</p>
             <p>{t.emptyHint}</p>
+            {alert}
             <Link href={href(locale, "/pantry")} className={styles.pill} onClick={closeCart}>
               {t.browse}
             </Link>
@@ -144,6 +150,7 @@ export function CartDrawer() {
                         type="button"
                         aria-label={t.increase(line.title)}
                         data-cart-increase
+                        disabled={line.quantity >= MAX_LINE_QUANTITY}
                         onClick={() => void setLineQuantity(line, line.quantity + 1)}
                       >
                         +
@@ -172,11 +179,7 @@ export function CartDrawer() {
                 <strong data-cart-subtotal>{cart ? formatMoney(cart.subtotal, locale) : ""}</strong>
               </p>
               <p className={styles.note}>{t.note}</p>
-              {error && (
-                <p className={styles.error} role="alert">
-                  {t.error}
-                </p>
-              )}
+              {alert}
               {internal ? (
                 <Link href={href(locale, checkoutUrl)} className={styles.pill} data-cart-checkout onClick={closeCart}>
                   {t.checkout}

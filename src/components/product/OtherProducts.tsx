@@ -199,13 +199,11 @@ export function OtherProducts({ title, cards, discover }: Props) {
         onDragStart={(e) => e.preventDefault()}
       >
         {cards.map((c, i) => (
-          <Link
+          <div
             key={c.handle}
-            href={c.href}
             className={styles.card}
             data-product-card=""
             data-handle={c.handle}
-            draggable={false}
             style={
               { "--card-bg": c.card, "--accent": c.accent } as CSSProperties
             }
@@ -268,13 +266,15 @@ export function OtherProducts({ title, cards, discover }: Props) {
                 <span aria-hidden="true">+</span>
               </button>
             ) : null}
-            <span className={styles.caption}>
-              <span className={styles.name} lang="vi">
-                {c.name}
-              </span>
-              <span className={styles.sub}>{c.sub}</span>
-            </span>
-          </Link>
+            <div className={styles.caption}>
+              <Link href={c.href} className={styles.link} draggable={false}>
+                <span className={styles.name} lang="vi">
+                  {c.name}
+                </span>
+                <span className={styles.sub}>{c.sub}</span>
+              </Link>
+            </div>
+          </div>
         ))}
       </div>
     </section>

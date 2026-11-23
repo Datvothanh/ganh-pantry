@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/shell/LocaleProvider";
+import type { Money } from "@/lib/commerce/types";
 import { cartCopy } from "./copy";
 import { addToCart } from "./store";
 import styles from "./Cart.module.css";
@@ -10,25 +11,41 @@ interface Props {
   handle: string;
   variantId: string;
   quantity?: number;
+  /** Unit price shown on the page; used for the optimistic cart line. */
+  price?: Money;
+  /** Sold out: the button is disabled and says so. */
+  soldOut?: boolean;
   className?: string;
 }
 
-/** Red pill that adds one product variant to the cart: idle → pending → added. */
-export function AddToCartButton({ handle, variantId, quantity = 1, className }: Props) {
+type Status = "idle" | "pending" | "added" | "error";
+
+/** Red pill that adds one product variant to the cart: idle → pending → added (or error). */
+export function AddToCartButton({ handle, variantId, quantity = 1, price, soldOut, className }: Props) {
   const t = cartCopy(useLocale());
-  const [status, setStatus] = useState<"idle" | "pending" | "added">("idle");
+  const [status, setStatus] = useState<Status>("idle");
   const timer = useRef(0);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   async function onClick() {
-    if (status === "pending") return;
+    if (status === "pending" || soldOut) return;
     window.clearTimeout(timer.current);
     setStatus("pending");
-    const ok = await addToCart(handle, variantId, quantity);
-    setStatus(ok ? "added" : "idle");
-    if (ok) timer.current = window.setTimeout(() => setStatus("idle"), 1800);
+    const ok = await addToCart(handle, variantId, quantity, price);
+    setStatus(ok ? "added" : "error");
+    timer.current = window.setTimeout(() => setStatus("idle"), ok ? 1800 : 4000);
   }
+
+  const label = soldOut
+    ? t.soldOut
+    : status === "pending"
+      ? t.adding
+      : status === "added"
+        ? t.added
+        : status === "error"
+          ? t.failed
+          : t.add;
 
   return (
     <button
@@ -36,11 +53,14 @@ export function AddToCartButton({ handle, variantId, quantity = 1, className }: 
       className={`${styles.pill} ${styles.add} ${className ?? ""}`}
       data-add-to-cart={handle}
       data-variant={variantId}
-      data-status={status}
-      aria-disabled={status === "pending"}
+      data-status={soldOut ? "sold-out" : status}
+      aria-disabled={status === "pending" || undefined}
+      disabled={soldOut}
       onClick={() => void onClick()}
     >
-      <span aria-live="polite">{status === "pending" ? t.adding : status === "added" ? t.added : t.add}</span>
+      <span aria-live="polite" role={status === "error" ? "alert" : undefined}>
+        {label}
+      </span>
     </button>
   );
 }

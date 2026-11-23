@@ -74,6 +74,11 @@ describe("optimistic transforms", () => {
     expect(b?.subtotal.amount).toBe(27);
     expect(optimisticAdd(null, "nope", "x", 1)).toBeNull();
   });
+  it("uses the price shown on the page for new lines", () => {
+    const a = optimisticAdd(null, "mut-gung", "220g", 2, { amount: 13.5, currencyCode: "EUR" });
+    expect(a?.lines[0].unitPrice).toEqual({ amount: 13.5, currencyCode: "EUR" });
+    expect(a?.subtotal).toEqual({ amount: 27, currencyCode: "EUR" });
+  });
   it("sets and removes quantities", () => {
     const a = optimisticAdd(null, "mut-gung", "220g", 2)!;
     const b = optimisticSet(a, a.lines[0].id, 3);

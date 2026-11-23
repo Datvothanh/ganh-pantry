@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -57,7 +58,9 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
     swallowClick: () => boolean;
   } | null>(null);
 
-  useEffect(() => {
+  // Layout effect: the first JS placement and `data-ready` land in the same frame as the
+  // CSS fallback layout they replace.
+  useLayoutEffect(() => {
     const el = track.current;
     if (!el) return;
     const reduced = prefersReducedMotion();
@@ -273,9 +276,10 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
             data-photo-slide=""
             aria-hidden={i >= slides.length ? true : undefined}
             style={
-              slide.tile
-                ? ({ "--tile": slide.tile } as CSSProperties)
-                : undefined
+              {
+                "--i": i,
+                ...(slide.tile ? { "--tile": slide.tile } : null),
+              } as CSSProperties
             }
             data-tile={slide.tile ? "" : undefined}
           >

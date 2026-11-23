@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { JarFlightLayer } from "@/components/flight";
 import { Footer } from "@/components/footer/Footer";
+import { FooterStrip } from "@/components/footer/FooterStrip";
+import { FooterSwitch } from "@/components/footer/FooterSwitch";
 import { Header } from "@/components/header/Header";
 import { INTRO_BOOT_SCRIPT } from "@/components/loader/boot";
 import { Shell } from "@/components/shell/Shell";
@@ -34,6 +36,7 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const footer = <Footer locale={locale} />;
 
   return (
     <html lang={locale} className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
@@ -44,7 +47,10 @@ export default async function LocaleLayout({ children, params }: Props) {
         <Shell locale={locale}>
           <Header locale={locale} />
           {children}
-          <Footer locale={locale} />
+          {/* Routes with request-time params resolve the segment late: they show the full footer. */}
+          <Suspense fallback={footer}>
+            <FooterSwitch home={<FooterStrip locale={locale} />} full={footer} />
+          </Suspense>
           <JarFlightLayer />
         </Shell>
       </body>

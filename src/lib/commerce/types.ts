@@ -58,7 +58,10 @@ export interface CommerceAdapter {
   removeLine(cartId: string, lineId: string): Promise<Cart>;
 }
 
-export type ActionResult = { ok: true; cart: Cart } | { ok: false; error: string };
+export type ActionResult =
+  | { ok: true; cart: Cart }
+  /** `gone`: the stored cart no longer exists; the client should drop its copy. */
+  | { ok: false; error: string; gone?: boolean };
 
 export const MAX_LINE_QUANTITY = 99;
 

@@ -166,3 +166,48 @@
     margin-top: 24px;
   }
 }
+
+/* ---- compact strip: the home page is one screen, so the credit sits inside it ---- */
+
+.strip {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  min-height: var(--footer-strip-h);
+  padding: 8px var(--pad);
+  background: var(--c-lacquer);
+  color: var(--c-cream);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.stripCredit {
+  opacity: 0.8;
+}
+
+.stripNav {
+  display: flex;
+  flex: none;
+  gap: 20px;
+}
+
+.stripNav a {
+  transition: color 0.25s ease;
+}
+
+.stripNav a:hover {
+  color: var(--c-flame);
+}
+
+@media (max-width: 720px) {
+  .strip {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 11px;
+  }
+}

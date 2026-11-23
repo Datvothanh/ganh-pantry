@@ -14,6 +14,8 @@ import { MotifSvg } from "@/components/motifs";
 import type { OtherCard } from "@/components/product/OtherProducts";
 import { RevealText } from "@/components/product/RevealText";
 import { buyCopy } from "@/components/product/buy";
+import { getLiveProduct } from "@/lib/commerce/live";
+import { firstAvailableVariantId } from "@/lib/commerce/variants";
 import { href } from "@/lib/i18n";
 import styles from "./Pantry.module.css";
 import { PantryGrid } from "./PantryGrid";
@@ -140,24 +142,32 @@ function Weights({ list, t, center }: { list: Product[]; t: PantryStrings; cente
   );
 }
 
-export function PantryPage({ locale }: { locale: Locale }) {
+export async function PantryPage({ locale }: { locale: Locale }) {
   const t = pantryStrings[locale];
   const dict = getDict(locale);
   const quickAdd = buyCopy[locale].quickAdd;
+  // Quick-add takes the first weight that can be bought (cached commerce reads).
+  const live = await Promise.all(products.map((p) => getLiveProduct(p.handle)));
+  const quickVariant = new Map(
+    products.map((p, i) => [p.handle, firstAvailableVariantId(p, live[i])]),
+  );
 
   const byCategory = (id: CategoryId) => products.filter((p) => p.category === id);
   const cardsFor = (list: Product[]): OtherCard[] =>
-    list.map((p) => ({
-      handle: p.handle,
-      href: href(locale, `/products/${p.handle}`),
-      name: p.nameVi,
-      sub: locale === "en" ? p.nameEn : p.subtitle.vi,
-      image: composite(p.handle),
-      card: p.colors.card,
-      accent: p.colors.accent,
-      motif: p.motif,
-      quickAdd: { variantId: p.variants[0].id, label: quickAdd(p.nameVi) },
-    }));
+    list.map((p) => {
+      const variantId = quickVariant.get(p.handle);
+      return {
+        handle: p.handle,
+        href: href(locale, `/products/${p.handle}`),
+        name: p.nameVi,
+        sub: locale === "en" ? p.nameEn : p.subtitle.vi,
+        image: composite(p.handle),
+        card: p.colors.card,
+        accent: p.colors.accent,
+        motif: p.motif,
+        quickAdd: variantId ? { variantId, label: quickAdd(p.nameVi) } : undefined,
+      };
+    });
 
   const heroPhoto = photo("pantry-hero");
   const outroPhoto = photo("pantry-outro");

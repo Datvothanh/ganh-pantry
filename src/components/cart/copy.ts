@@ -17,6 +17,8 @@ const en = {
   add: "Add to cart",
   adding: "Adding…",
   added: "Added",
+  failed: "Not added, try again",
+  soldOut: "Sold out",
   error: "Something went wrong. Please try again.",
   demo: {
     title: "Checkout",
@@ -47,6 +49,8 @@ const vi: typeof en = {
   add: "Thêm vào giỏ",
   adding: "Đang thêm…",
   added: "Đã thêm",
+  failed: "Chưa thêm được, thử lại",
+  soldOut: "Hết hàng",
   error: "Có lỗi xảy ra. Vui lòng thử lại.",
   demo: {
     title: "Thanh toán",

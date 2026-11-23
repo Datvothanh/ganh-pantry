@@ -32,15 +32,17 @@ export function PantryGrid({
   useEffect(() => cursor.hide, [cursor.hide]);
 
   return (
-    <div className={styles.grid} data-pantry-grid="">
+    <div
+      className={styles.grid}
+      data-pantry-grid=""
+      style={{ "--n": cards.length } as CSSProperties}
+    >
       {cards.map((c) => (
-        <Link
+        <div
           key={c.handle}
-          href={c.href}
           className={`${card.card} ${styles.card}`}
           data-product-card=""
           data-handle={c.handle}
-          draggable={false}
           style={{ "--card-bg": c.card, "--accent": c.accent } as CSSProperties}
           onPointerEnter={(e) => {
             if (e.pointerType === "mouse" || e.pointerType === "pen")
@@ -98,13 +100,15 @@ export function PantryGrid({
               <span aria-hidden="true">+</span>
             </button>
           ) : null}
-          <span className={card.caption}>
-            <span className={card.name} lang="vi">
-              {c.name}
-            </span>
-            <span className={card.sub}>{c.sub}</span>
-          </span>
-        </Link>
+          <div className={card.caption}>
+            <Link href={c.href} className={card.link} draggable={false}>
+              <span className={card.name} lang="vi">
+                {c.name}
+              </span>
+              <span className={card.sub}>{c.sub}</span>
+            </Link>
+          </div>
+        </div>
       ))}
     </div>
   );

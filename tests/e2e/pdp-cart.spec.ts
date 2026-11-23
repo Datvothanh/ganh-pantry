@@ -70,6 +70,9 @@ test("sticky buy bar shows after the buy block scrolls away and hides near the f
 }) => {
   await page.goto("/products/mut-gung");
   await expect(bar(page)).toBeHidden();
+  // Scroll only once the page has hydrated: on mount the shell jumps to the top
+  // (ScrollTopOnRouteChange), which would undo an earlier scroll under parallel load.
+  await expect(page.locator('[data-jar-target][data-hero-ready="true"]')).toHaveCount(1);
   await page.locator("[data-other-products]").scrollIntoViewIfNeeded();
   await expect(bar(page)).toBeVisible();
   await expect(bar(page).locator("[data-sticky-price]")).toHaveText("$9");
@@ -97,4 +100,70 @@ test("sticky buy bar shows after the buy block scrolls away and hides near the f
     window.scrollTo(0, document.documentElement.scrollHeight),
   );
   await expect(bar(page)).toBeHidden();
+});
+
+/** Mock-adapter cart cookie: base64url JSON of [handle, variantId, quantity][]. */
+const cartCookie = (rows: [string, string, number][]) => ({
+  name: "ganh_cart",
+  value: Buffer.from(JSON.stringify(rows), "utf8").toString("base64url"),
+  domain: "127.0.0.1",
+  path: "/",
+});
+
+test("a failed add shows an error the shopper sees, even with an empty cart", async ({
+  page,
+}) => {
+  await page.goto("/products/mut-gung");
+  await block(page).scrollIntoViewIfNeeded();
+  // Every server action from now on fails at the network.
+  await page.route("**/*", (route) =>
+    route.request().method() === "POST" && route.request().headers()["next-action"]
+      ? route.abort()
+      : route.continue(),
+  );
+  const add = block(page).locator("[data-add-to-cart]");
+  await add.click();
+  await expect(drawer(page)).toBeVisible();
+  await expect(drawer(page).locator("[data-cart-empty]")).toBeVisible();
+  await expect(drawer(page).locator("[data-cart-error]")).toBeVisible();
+  await expect(add).toHaveAttribute("data-status", "error");
+  await expect(drawer(page).locator("[data-cart-line]")).toHaveCount(0);
+});
+
+test("the drawer + is disabled at the maximum quantity", async ({ page, context }) => {
+  await context.addCookies([cartCookie([["mut-gung", "220g", 99]])]);
+  await page.goto("/products/mut-gung");
+  await expect(page.locator("[data-cart-count]")).toHaveText("99");
+  await page.locator("[data-cart-button]").click();
+  const line = drawer(page).locator('[data-cart-line="mut-gung"]');
+  await expect(line.locator("[data-cart-qty]")).toHaveText("99");
+  await expect(line.locator("[data-cart-increase]")).toBeDisabled();
+  await expect(line.locator("[data-cart-decrease]")).toBeEnabled();
+});
+
+test("a cart that is gone on the server resets the drawer, which then recovers", async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([cartCookie([["mut-gung", "220g", 2]])]);
+  await page.goto("/products/mut-gung");
+  await expect(page.locator("[data-cart-count]")).toHaveText("2");
+  await page.locator("[data-cart-button]").click();
+  const line = drawer(page).locator('[data-cart-line="mut-gung"]');
+  await expect(line).toBeVisible();
+
+  // The cart expires server-side (cookie gone) while the drawer still shows it.
+  await context.clearCookies();
+  await line.locator("[data-cart-increase]").click();
+  await expect(drawer(page).locator("[data-cart-empty]")).toBeVisible();
+  await expect(drawer(page).locator("[data-cart-error]")).toBeVisible();
+  await expect(page.locator("[data-cart-count]")).toHaveCount(0);
+
+  // Adding again starts a fresh cart.
+  await page.keyboard.press("Escape");
+  await block(page).scrollIntoViewIfNeeded();
+  await block(page).locator("[data-add-to-cart]").click();
+  await expect(line.locator("[data-cart-qty]")).toHaveText("1");
+  await expect(page.locator("[data-cart-count]")).toHaveText("1");
+  await expect(drawer(page).locator("[data-cart-error]")).toHaveCount(0);
 });

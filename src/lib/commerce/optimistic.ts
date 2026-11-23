@@ -1,6 +1,6 @@
 import { productByHandle } from "@/content/products";
 import { money } from "./format";
-import { MAX_LINE_QUANTITY, type Cart, type CartLine } from "./types";
+import { MAX_LINE_QUANTITY, type Cart, type CartLine, type Money } from "./types";
 
 /** Pure cart transforms used for optimistic UI before the server action confirms. */
 
@@ -25,6 +25,8 @@ export function optimisticAdd(
   handle: string,
   variantId: string,
   quantity: number,
+  /** Unit price shown to the shopper (from commerce); falls back to the catalogue price. */
+  price?: Money,
 ): Cart | null {
   const lines = (cart?.lines ?? []).map((l) => ({ ...l }));
   const existing = lines.find((l) => l.handle === handle && l.variantId === variantId);
@@ -36,7 +38,7 @@ export function optimisticAdd(
   const product = productByHandle(handle);
   const variant = product?.variants.find((v) => v.id === variantId);
   if (!product || !variant) return cart;
-  const unitPrice = money(variant.price, cart?.subtotal.currencyCode ?? "USD");
+  const unitPrice = price ?? money(variant.price, cart?.subtotal.currencyCode ?? "USD");
   lines.push({
     id: `${handle}:${variantId}`,
     quantity: clamp(quantity),

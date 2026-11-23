@@ -5,7 +5,10 @@ import { openCart } from "@/components/cart/store";
 import { useBuy } from "./BuyProvider";
 import styles from "./buy.module.css";
 
-/** Add to cart for the selected weight and quantity; opens the drawer to show the result. */
+/**
+ * Add to cart for the selected weight and quantity; opens the drawer to show the result
+ * (or its error). Disabled when the selected weight is sold out.
+ */
 export function BuyAdd() {
   const { handle, variant, quantity } = useBuy();
   return (
@@ -18,6 +21,8 @@ export function BuyAdd() {
         handle={handle}
         variantId={variant.id}
         quantity={quantity}
+        price={variant.unitPrice}
+        soldOut={!variant.available}
         className={styles.add}
       />
     </span>

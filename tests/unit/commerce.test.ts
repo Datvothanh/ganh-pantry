@@ -214,6 +214,18 @@ describe("shopify adapter", () => {
     await expect(add("9kg")).rejects.toThrow(/Unknown/);
   });
 
+  it("keeps an explicit http:// domain (local fake storefront)", async () => {
+    const f = mockFetch({ data: { product: null } });
+    await createShopifyAdapter({ domain: "http://127.0.0.1:4010/", token: "t", fetch: f }).getProduct("x");
+    expect(String(f.mock.calls[0][0])).toBe("http://127.0.0.1:4010/api/2026-10/graphql.json");
+  });
+
+  it("keeps an explicit http:// domain (local fake storefront)", async () => {
+    const f = mockFetch({ data: { product: null } });
+    await createShopifyAdapter({ domain: "http://127.0.0.1:4010/", token: "t", fetch: f }).getProduct("x");
+    expect(String(f.mock.calls[0][0])).toBe("http://127.0.0.1:4010/api/2026-10/graphql.json");
+  });
+
   it("returns null for a missing cart", async () => {
     expect(await adapterWith(mockFetch({ data: { cart: null } })).getCart("gone")).toBeNull();
   });

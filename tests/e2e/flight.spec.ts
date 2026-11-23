@@ -78,6 +78,49 @@ test("clicking a jar flies it into the product hero", async ({ page }) => {
   expect(Number(await jar.locator("[data-jar-rise]").evaluate((e) => getComputedStyle(e).opacity))).toBe(1);
 });
 
+test("the flight clone starts with the source jar's filter", async ({ page }) => {
+  const target = await ready(page);
+  await page.evaluate(() => {
+    const w = window as unknown as { __srcFilter: string; __cloneFilter: string };
+    // Source filter at the click (capture runs before the flight hides the source).
+    window.addEventListener(
+      "click",
+      (e) => {
+        const item = (e.target as Element | null)?.closest?.("[data-jar-slider-item]");
+        if (item) w.__srcFilter = getComputedStyle(item).filter;
+      },
+      true,
+    );
+    // Clone filter on the very first frame it exists.
+    new MutationObserver((records) => {
+      for (const r of records)
+        for (const n of r.addedNodes)
+          if (n instanceof HTMLElement && n.matches("[data-jar-flight-clone]")) w.__cloneFilter = getComputedStyle(n).filter;
+    }).observe(document, { childList: true, subtree: true });
+  });
+  await page.mouse.click(target.x, target.y);
+  await page.waitForFunction(() => (window as unknown as { __cloneFilter?: string }).__cloneFilter !== undefined, undefined, {
+    timeout: 10_000,
+  });
+  const { src, clone } = await page.evaluate(() => {
+    const w = window as unknown as { __srcFilter: string; __cloneFilter: string };
+    return { src: w.__srcFilter, clone: w.__cloneFilter };
+  });
+  expect(src).toBeTruthy();
+  expect(src).not.toBe("none");
+  expect(clone).toBe(src);
+  // ...and eases toward no filter while it flies.
+  await page.waitForFunction(
+    (initial) => {
+      const c = document.querySelector("[data-jar-flight-clone]");
+      return !!c && getComputedStyle(c).filter !== initial;
+    },
+    src,
+    { timeout: 6_000 },
+  );
+  await expect(page.locator("[data-jar-flight-clone]")).toHaveCount(0, { timeout: 6_000 });
+});
+
 test("browser back restores the slider", async ({ page }) => {
   const target = await ready(page);
   await page.mouse.click(target.x, target.y);

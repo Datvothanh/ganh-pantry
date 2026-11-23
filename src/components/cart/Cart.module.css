@@ -210,6 +210,12 @@
   background: rgb(94 27 20 / 0.08);
 }
 
+.stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: none;
+}
+
 .stepper output {
   min-width: 26px;
   text-align: center;
@@ -324,6 +330,18 @@
 
 .add[data-status="added"] {
   background: var(--c-lacquer);
+}
+
+.add[data-status="error"] {
+  background: var(--c-lacquer);
+  outline: 2px solid var(--c-red);
+  outline-offset: 2px;
+}
+
+.add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

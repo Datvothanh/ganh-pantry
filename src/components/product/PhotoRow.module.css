@@ -43,13 +43,18 @@
   overflow: hidden;
   border-radius: clamp(14px, 1.6vw, 28px);
   background: var(--tile, var(--c-cream));
-  opacity: 0;
   transition: opacity 0.6s ease;
   will-change: transform;
 }
 
-.row[data-ready] .slide {
-  opacity: 1;
+/* Before JS measures the row: a plain CSS row from the centre (visible without JS). */
+.row:not([data-ready]) .slide {
+  left: calc((100% - var(--photo-w)) / 2 + var(--i, 0) * (var(--photo-w) + var(--photo-gap)));
+}
+
+/* With motion and scripts, slides fade in once JS has placed them. */
+:global(html[data-motion]) .row:not([data-ready]) .slide {
+  opacity: 0;
 }
 
 .img {

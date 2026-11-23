@@ -83,7 +83,7 @@ export function JarSlider({ items, headline, prompt, badge, discover }: Props) {
         <BackShape />
         <Badge text={badge} />
       </div>
-      <p className={styles.prompt}>{prompt}</p>
+      <p className={styles.prompt} data-hero-prompt="">{prompt}</p>
       <div className={styles.wrap} data-jar-slider-wrap="" data-lenis-prevent="">
         <div className={styles.marquee}>
           <div className={styles.track} data-jar-slider-track="">

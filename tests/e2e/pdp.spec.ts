@@ -65,7 +65,7 @@ test("photo row and other products render", async ({ page }) => {
 test("vi locale shows Vietnamese strings", async ({ page }) => {
   await page.goto("/vi/products/mut-gung");
   await expect(page.locator("[data-other-products] h2")).toContainText("Sản phẩm");
-  expect(await cards(page).first().getAttribute("href")).toMatch(/^\/vi\/products\//);
+  expect(await cards(page).first().locator("a").getAttribute("href")).toMatch(/^\/vi\/products\//);
 });
 
 test("hovering a card pops its motif, clicking navigates", async ({ page }) => {

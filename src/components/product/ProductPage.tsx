@@ -6,8 +6,9 @@ import {
 } from "@/content/products";
 import { getDict } from "@/content/dict";
 import { href } from "@/lib/i18n";
-import { commerce, formatMoney } from "@/lib/commerce";
-import { money } from "@/lib/commerce/format";
+import { formatMoney } from "@/lib/commerce/format";
+import { getLiveProduct } from "@/lib/commerce/live";
+import { firstAvailableVariantId, liveVariants } from "@/lib/commerce/variants";
 import { productPhotos } from "@/lib/photos";
 import {
   BuyBlock,
@@ -46,16 +47,18 @@ export async function ProductPage({
   const category = categories.find((c) => c.id === product.category)!;
   const name = locale === "en" ? product.nameEn : product.subtitle.vi;
 
-  const live = await commerce.getProduct(product.handle).catch(() => null);
-  const buyVariants: BuyVariant[] = product.variants.map((v) => {
-    const found = live?.variants.find((x) => x.id === v.id);
-    return {
-      id: v.id,
-      weight: v.weight,
-      price: formatMoney(found?.price ?? money(v.price), locale),
-      available: found?.availableForSale ?? true,
-    };
-  });
+  // Cached commerce reads (`use cache`), so the page still prerenders with Shopify connected.
+  const rest = others(product);
+  const [live, ...restLive] = await Promise.all(
+    [product, ...rest].map((p) => getLiveProduct(p.handle)),
+  );
+  const buyVariants: BuyVariant[] = liveVariants(product, live).map((v) => ({
+    id: v.id,
+    weight: v.weight,
+    price: formatMoney(v.price, locale),
+    unitPrice: v.price,
+    available: v.available,
+  }));
   const quickAdd = buyCopy[locale].quickAdd;
 
   const photos = productPhotos(product.handle);
@@ -72,17 +75,20 @@ export async function ProductPage({
         tile,
       }));
 
-  const cards: OtherCard[] = others(product).map((p) => ({
-    handle: p.handle,
-    href: href(locale, `/products/${p.handle}`),
-    name: p.nameVi,
-    sub: locale === "en" ? p.nameEn : p.subtitle.vi,
-    image: composite(p.handle),
-    card: p.colors.card,
-    accent: p.colors.accent,
-    motif: p.motif,
-    quickAdd: { variantId: p.variants[0].id, label: quickAdd(p.nameVi) },
-  }));
+  const cards: OtherCard[] = rest.map((p, i) => {
+    const variantId = firstAvailableVariantId(p, restLive[i]);
+    return {
+      handle: p.handle,
+      href: href(locale, `/products/${p.handle}`),
+      name: p.nameVi,
+      sub: locale === "en" ? p.nameEn : p.subtitle.vi,
+      image: composite(p.handle),
+      card: p.colors.card,
+      accent: p.colors.accent,
+      motif: p.motif,
+      quickAdd: variantId ? { variantId, label: quickAdd(p.nameVi) } : undefined,
+    };
+  });
 
   return (
     <main className={styles.page} data-product={product.handle}>

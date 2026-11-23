@@ -246,11 +246,21 @@ export function mapCart(raw: RawCart): Cart {
 export class ShopifyError extends Error {}
 
 export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
-  const domain = config.domain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-  const endpoint = `https://${domain}/api/${config.version || DEFAULT_API_VERSION}/graphql.json`;
+  // An explicit `http://` is kept (local fake storefront in scripts/check-shopify-build.mjs).
+  const scheme = /^http:\/\//i.test(config.domain.trim()) ? "http" : "https";
+  const domain = config.domain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const endpoint = `${scheme}://${domain}/api/${config.version || DEFAULT_API_VERSION}/graphql.json`;
   const doFetch = config.fetch ?? fetch;
 
-  async function gql<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  /**
+   * `cache: "no-store"` for cart reads and mutations. Product reads leave fetch caching to the
+   * caller (`getLiveProduct` wraps them in `use cache`).
+   */
+  async function gql<T>(
+    query: string,
+    variables: Record<string, unknown> = {},
+    cache: RequestCache | undefined = "no-store",
+  ): Promise<T> {
     const res = await doFetch(endpoint, {
       method: "POST",
       headers: {
@@ -258,7 +268,7 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
         "X-Shopify-Storefront-Access-Token": config.token,
       },
       body: JSON.stringify({ query, variables }),
-      cache: "no-store",
+      ...(cache ? { cache } : {}),
     });
     if (!res.ok) throw new ShopifyError(`Shopify Storefront API responded ${res.status}`);
     const json = (await res.json()) as { data?: T; errors?: { message: string }[] };
@@ -286,13 +296,14 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
     throw new ShopifyError(errors.map((e) => e.message).join("; "));
   }
 
-  async function getProduct(handle: string) {
-    const data = await gql<{ product: RawProduct | null }>(PRODUCT_QUERY, { handle });
+  async function getProduct(handle: string, cache?: RequestCache) {
+    const data = await gql<{ product: RawProduct | null }>(PRODUCT_QUERY, { handle }, cache);
     return mapProduct(data.product);
   }
 
   async function lineFor({ handle, variantId, quantity }: AddLineInput) {
-    const product = await getProduct(handle);
+    // Fresh availability for the cart, never a cached read.
+    const product = await getProduct(handle, "no-store");
     const variant = product?.variants.find((v) => v.id === variantId);
     if (!variant) throw new ShopifyError(`Unknown product or variant: ${handle}/${variantId}`);
     if (!variant.availableForSale) throw new ShopifyError(`${handle}/${variantId} is sold out`);
@@ -319,7 +330,7 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
 
   const adapter: CommerceAdapter = {
     kind: "shopify",
-    getProduct,
+    getProduct: (handle) => getProduct(handle),
     async getCart(cartId) {
       const data = await gql<{ cart: RawCart | null }>(CART_QUERY, { cartId });
       return data.cart ? mapCart(data.cart) : null;

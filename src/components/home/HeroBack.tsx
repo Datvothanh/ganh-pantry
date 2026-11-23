@@ -20,7 +20,7 @@ export function Badge({ text }: { text: string }) {
   // Size the glyphs so the phrase wraps the circle exactly once.
   const fontSize = Math.min(118, CIRC / (text.length * 0.64));
   return (
-    <div className={styles.badge} aria-hidden="true">
+    <div className={styles.badge} aria-hidden="true" data-hero-badge="">
       <svg viewBox="0 0 1000 1000" className={styles.badgeSvg}>
         <defs>
           <path id="jar-badge-circle" d={`M500 ${500 - R}a${R} ${R} 0 1 1 -0.01 0Z`} />

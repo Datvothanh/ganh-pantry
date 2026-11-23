@@ -34,7 +34,18 @@ export function StickyBuyBar() {
     update();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    // Layout shifts (hero clearance, images, fonts) move the block and the footer without a
+    // scroll event; re-measure when they cross the viewport or the page height changes.
+    const io = new IntersectionObserver(schedule, { threshold: [0, 1] });
+    const ro = new ResizeObserver(schedule);
+    for (const sel of ["[data-buy-block]", "[data-site-footer]"]) {
+      const el = document.querySelector(sel);
+      if (el) io.observe(el);
+    }
+    ro.observe(document.body);
     return () => {
+      io.disconnect();
+      ro.disconnect();
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);

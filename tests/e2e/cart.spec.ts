@@ -94,6 +94,8 @@ test("checkout from a real locale page closes the drawer and unlocks scroll", as
   await page.goto("/dev/cart/harness.html");
   await gung(page).click();
   await expect(count(page)).toHaveText("1");
+  // The count is optimistic; wait for the server to confirm (and set the cookie) before leaving.
+  await expect(gung(page)).toHaveAttribute("data-status", "added");
 
   await page.goto("/vi/pantry");
   await expect(count(page)).toHaveText("1");

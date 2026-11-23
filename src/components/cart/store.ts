@@ -8,7 +8,7 @@ import {
   updateCartLineAction,
 } from "@/lib/commerce/actions";
 import { optimisticAdd, optimisticSet } from "@/lib/commerce/optimistic";
-import type { ActionResult, Cart, CartLine } from "@/lib/commerce/types";
+import type { ActionResult, Cart, CartLine, Money } from "@/lib/commerce/types";
 
 /**
  * Client cart store with optimistic updates.
@@ -79,7 +79,11 @@ async function mutate(
     if (result.ok) {
       confirmed = result.cart;
       ok = true;
-    } else error = result.error;
+    } else {
+      error = result.error;
+      // The server dropped a cart that no longer exists: start over from an empty cart.
+      if (result.gone) confirmed = null;
+    }
   } catch (err) {
     error = err instanceof Error ? err.message : "Cart error";
   }
@@ -89,10 +93,11 @@ async function mutate(
   return ok;
 }
 
-export function addToCart(handle: string, variantId: string, quantity = 1): Promise<boolean> {
+/** `price`: the unit price shown to the shopper, used for the optimistic line. */
+export function addToCart(handle: string, variantId: string, quantity = 1, price?: Money): Promise<boolean> {
   set({ bump: state.bump + 1 });
   return mutate(
-    (cart) => optimisticAdd(cart, handle, variantId, quantity),
+    (cart) => optimisticAdd(cart, handle, variantId, quantity, price),
     () => addToCartAction(handle, variantId, quantity),
   );
 }
@@ -116,6 +121,9 @@ export function removeLine(line: CartLine): Promise<boolean> {
     () => removeCartLineAction(realId(line)),
   );
 }
+
+/** Current state outside React (tests, event handlers). */
+export const getCartSnapshot = (): CartState => state;
 
 export const openCart = () => set({ open: true });
 export const closeCart = () => set({ open: false });
