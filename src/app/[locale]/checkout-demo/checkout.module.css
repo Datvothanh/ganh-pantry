@@ -1,0 +1,123 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 20px;
+  padding: calc(var(--header-h) + 20px) var(--pad) 100px;
+  text-align: center;
+}
+
+.kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-red);
+}
+
+.title {
+  color: var(--c-red);
+  font-size: clamp(48px, 9vw, 140px);
+  font-weight: 300;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.body {
+  max-width: 56ch;
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: clamp(17px, 1.6vw, 22px);
+}
+
+.summary {
+  width: min(560px, 100%);
+  margin-top: 16px;
+  padding: 28px;
+  border-radius: 18px;
+  background: var(--c-cream);
+  text-align: left;
+}
+
+.summaryTitle {
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--c-lacquer);
+  margin-bottom: 10px;
+}
+
+.lines {
+  list-style: none;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid rgb(94 27 20 / 0.12);
+}
+
+.name {
+  font-family: var(--font-display), serif;
+  font-size: 20px;
+  color: var(--c-lacquer);
+}
+
+.name small {
+  display: block;
+  font-family: var(--font-text), sans-serif;
+  font-size: 12px;
+  color: var(--c-ink);
+  opacity: 0.65;
+}
+
+.qty {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 16px;
+}
+
+.subtotal strong {
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  font-size: 30px;
+  color: var(--c-lacquer);
+}
+
+.empty {
+  padding: 12px 0;
+  opacity: 0.75;
+}
+
+.back {
+  display: inline-grid;
+  place-items: center;
+  min-height: 46px;
+  padding: 0 28px;
+  border-radius: 999px;
+  background: var(--c-red);
+  color: var(--c-cream);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.back:hover {
+  background: var(--c-lacquer);
+}

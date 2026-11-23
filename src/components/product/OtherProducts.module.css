@@ -1,0 +1,201 @@
+.section {
+  --gap: 15px;
+  padding-block: clamp(90px, 10vw, 200px);
+}
+
+.title {
+  margin: 0 auto;
+  max-width: 70vw;
+  padding-inline: var(--pad);
+  color: var(--c-red);
+  font-size: clamp(3.2rem, calc(1.6rem + 5.2vw), 10rem);
+  line-height: 0.92;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.title > span {
+  display: block;
+}
+
+.track {
+  display: flex;
+  gap: var(--gap);
+  margin-top: clamp(40px, 4.5vw, 90px);
+  padding-inline: var(--pad);
+  overflow-x: auto;
+  scrollbar-width: none;
+  cursor: grab;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.track[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.track[data-dragging] > * {
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  flex: 0 0 calc(25vw - var(--pad) * 2 / 4 - var(--gap) * 3 / 4);
+  aspect-ratio: 367.5 / 480.8;
+  overflow: hidden;
+  border-radius: clamp(14px, 1.6vw, 28px);
+  background: var(--card-bg);
+  transition: transform 0.6s var(--ease-out);
+  isolation: isolate;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pop {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 36%;
+  color: var(--accent);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.1) rotate(calc(var(--r) - 60deg));
+  transition:
+    opacity 0.25s ease,
+    transform 0.4s var(--ease-out);
+}
+
+.motif {
+  width: 100%;
+  height: auto;
+}
+
+.jar {
+  position: absolute;
+  left: 50%;
+  bottom: 19%;
+  z-index: 1;
+  width: 44%;
+  transform: translateX(-50%);
+  transform-origin: 50% 72%;
+  transition: transform 1s var(--ease-out);
+}
+
+.jar img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 22px rgb(43 26 20 / 0.18));
+}
+
+.caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px clamp(12px, 1.4vw, 22px);
+  color: var(--c-lacquer);
+  text-align: center;
+}
+
+.name {
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.05rem, calc(0.8rem + 0.6vw), 1.6rem);
+  line-height: 1.1;
+}
+
+.sub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.quick {
+  position: absolute;
+  top: clamp(10px, 1.2vw, 18px);
+  right: clamp(10px, 1.2vw, 18px);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--c-red);
+  color: var(--c-cream);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    opacity 0.3s ease,
+    transform 0.5s var(--ease-spring),
+    background-color 0.3s ease;
+}
+
+.quick:hover {
+  background: var(--c-lacquer);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .quick {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  .card:hover .quick,
+  .quick:focus-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .card:hover {
+    transform: scale(0.96) rotate(2deg);
+  }
+
+  .card:hover .jar {
+    transform: translateX(-50%) translateY(-4%) scale(1.1) rotate(4deg);
+  }
+
+  .card:hover .pop {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--s)) rotate(var(--r));
+    transition:
+      opacity 0.2s ease var(--d),
+      transform 0.7s var(--ease-spring) var(--d);
+  }
+}
+
+.card:focus-visible .pop {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(var(--s)) rotate(var(--r));
+}
+
+@media (max-width: 1024px) {
+  .card {
+    flex-basis: calc(40vw - var(--pad) * 2 / 2.5 - var(--gap));
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    flex-basis: 78%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .jar,
+  .pop {
+    transition: none !important;
+  }
+}

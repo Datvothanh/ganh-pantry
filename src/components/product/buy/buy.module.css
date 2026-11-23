@@ -1,0 +1,241 @@
+/* ---- weight pills (inside the info row) ---- */
+
+.weights {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  margin: 14px 0 0;
+}
+
+.weight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--c-lacquer) 25%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-lacquer);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.4s var(--ease-spring);
+}
+
+.weight:hover:not(:disabled) {
+  border-color: var(--c-red);
+  transform: scale(1.06);
+}
+
+.weight[data-selected] {
+  background: var(--c-lacquer);
+  border-color: var(--c-lacquer);
+  color: var(--c-cream);
+}
+
+.weight:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.weight:focus-visible {
+  outline: 2px solid var(--c-red);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .weights {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* ---- buy block ---- */
+
+.block {
+  padding: clamp(40px, 4.5vw, 80px) var(--pad) 0;
+}
+
+.blockInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 20px clamp(20px, 3vw, 48px);
+  max-width: calc(100% / 12 * 8);
+  margin-inline: auto;
+  padding: clamp(22px, 2.4vw, 36px) 0;
+  border-top: 1px solid color-mix(in srgb, var(--c-lacquer) 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-lacquer) 20%, transparent);
+}
+
+.priceCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 120px;
+}
+
+.label {
+  margin: 0;
+  color: var(--c-red);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.price {
+  margin: 6px 0 0;
+  color: var(--c-lacquer);
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.2rem, calc(1.4rem + 2vw), 4rem);
+  line-height: 1;
+}
+
+.weightNote {
+  margin: 6px 0 0;
+  color: var(--c-lacquer);
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.qty {
+  display: inline-flex;
+  align-items: center;
+  height: 46px;
+  border: 1px solid color-mix(in srgb, var(--c-lacquer) 25%, transparent);
+  border-radius: 999px;
+  color: var(--c-lacquer);
+}
+
+.qty button {
+  width: 44px;
+  height: 100%;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.qty button:hover:not(:disabled) {
+  color: var(--c-red);
+}
+
+.qty button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.qty output {
+  min-width: 28px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.addWrap {
+  display: contents;
+}
+
+.add {
+  min-width: 190px;
+  cursor: pointer;
+}
+
+/* ---- sticky bar ---- */
+
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 0 var(--pad) clamp(10px, 1.4vw, 20px);
+  pointer-events: none;
+  transform: translateY(130%);
+  visibility: hidden;
+  transition:
+    transform 0.6s var(--ease-out),
+    visibility 0s linear 0.6s;
+}
+
+.bar[data-visible] {
+  transform: none;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.barInner {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 28px);
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 10px 10px 10px clamp(16px, 2vw, 28px);
+  border-radius: 999px;
+  background: var(--c-cream);
+  box-shadow: 0 10px 40px rgb(43 26 20 / 0.22);
+  color: var(--c-lacquer);
+  pointer-events: auto;
+}
+
+.barName {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.1rem, 1rem + 0.5vw, 1.5rem);
+  line-height: 1.1;
+}
+
+.barWeight {
+  font-family: inherit;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.barPrice {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .blockInner {
+    max-width: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .add {
+    min-width: 0;
+    padding-inline: 18px;
+  }
+
+  .barWeight {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .weight {
+    transition: none;
+  }
+}

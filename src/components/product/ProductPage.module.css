@@ -1,0 +1,119 @@
+.page {
+  position: relative;
+}
+
+/* ---- intro ---- */
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(22px, 2.4vw, 40px);
+  max-width: min(1200px, calc(100% / 12 * 10));
+  margin-inline: auto;
+  /* --hero-clear: space the hero jar/meta need below the stage (measured by ProductHero). */
+  padding: max(calc(15vh + clamp(60px, 7vw, 140px)), var(--hero-clear, 0px))
+    var(--pad) 0;
+  text-align: center;
+}
+
+.rhombus {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+  background: var(--c-lacquer);
+  transform: rotate(45deg);
+}
+
+.description {
+  color: var(--c-lacquer);
+  font-size: clamp(1.15rem, calc(0.85rem + 0.75vw), 1.9rem);
+  line-height: 1.4;
+  max-width: 1100px;
+}
+
+.after {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 900px;
+  color: var(--c-lacquer);
+  font-size: clamp(0.95rem, calc(0.8rem + 0.3vw), 1.2rem);
+  line-height: 1.5;
+}
+
+.small {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+/* ---- info row ---- */
+
+.meta {
+  padding: clamp(50px, 6vw, 110px) var(--pad) 0;
+}
+
+.metaInner {
+  display: grid;
+  grid-template-columns: 4fr 2fr 1.1fr;
+  max-width: calc(100% / 12 * 8);
+  margin-inline: auto;
+  border-top: 1px solid color-mix(in srgb, var(--c-lacquer) 20%, transparent);
+}
+
+.col {
+  padding-top: 30px;
+}
+
+.col:not(:first-child) {
+  border-left: 1px solid color-mix(in srgb, var(--c-lacquer) 20%, transparent);
+  padding-left: clamp(20px, 3vw, 48px);
+}
+
+.col:not(:last-child) {
+  padding-right: clamp(20px, 3vw, 48px);
+}
+
+.col.colTight {
+  padding-inline: clamp(14px, 1.4vw, 24px);
+}
+
+.label {
+  margin: 0;
+  color: var(--c-red);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.value {
+  margin: 14px 0 0;
+  color: var(--c-lacquer);
+  font-size: 15px;
+}
+
+@media (max-width: 1024px) {
+  .intro {
+    max-width: none;
+    padding-top: max(clamp(40px, 8vh, 100px), var(--hero-clear, 0px));
+  }
+
+  .metaInner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: none;
+    text-align: center;
+  }
+
+  .col:not(:first-child) {
+    border-left: none;
+    border-top: 1px solid color-mix(in srgb, var(--c-lacquer) 20%, transparent);
+    padding-left: 0;
+    padding-top: 20px;
+  }
+
+  .col:not(:last-child) {
+    padding-right: 0;
+  }
+}

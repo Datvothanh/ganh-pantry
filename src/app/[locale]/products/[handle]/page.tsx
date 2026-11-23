@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ProductPage } from "@/components/product/ProductPage";
 import { productByHandle, products } from "@/content/products";
 import { isLocale, locales } from "@/lib/i18n";
-import styles from "../../../_placeholder/Placeholder.module.css";
 
 type Props = { params: Promise<{ locale: string; handle: string }> };
 
@@ -17,17 +17,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: product.nameVi, description: product.subtitle[locale] };
 }
 
-// Placeholder: the pdp lane fills this page.
-export default async function ProductPage({ params }: Props) {
+export default async function ProductRoute({ params }: Props) {
   const { locale, handle } = await params;
   const product = productByHandle(handle);
   if (!product || !isLocale(locale)) notFound();
-  return (
-    <main className={styles.page}>
-      <h1 className={styles.title} lang="vi">
-        {product.nameVi}
-      </h1>
-      <p className={styles.sub}>{locale === "en" ? product.nameEn : product.subtitle.vi}</p>
-    </main>
-  );
+  return <ProductPage product={product} locale={locale} />;
 }

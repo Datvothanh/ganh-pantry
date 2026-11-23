@@ -1,0 +1,63 @@
+import type { Locale } from "@/lib/i18n";
+
+const en = {
+  cart: "Cart",
+  open: (n: number) => (n === 0 ? "Open cart" : `Open cart, ${n} ${n === 1 ? "item" : "items"}`),
+  close: "Close cart",
+  empty: "Your cart is empty.",
+  emptyHint: "The jars are waiting in the pantry.",
+  browse: "Go to the pantry",
+  subtotal: "Subtotal",
+  checkout: "Checkout",
+  note: "Shipping and taxes are calculated at checkout.",
+  remove: (name: string) => `Remove ${name}`,
+  decrease: (name: string) => `Decrease quantity of ${name}`,
+  increase: (name: string) => `Increase quantity of ${name}`,
+  quantity: "Quantity",
+  add: "Add to cart",
+  adding: "Adding…",
+  added: "Added",
+  error: "Something went wrong. Please try again.",
+  demo: {
+    title: "Checkout",
+    kicker: "Portfolio demo",
+    body: "GÁNH is a concept project, so there is no real checkout here. In a live store this step hands your cart to Shopify's hosted checkout. Nothing was charged and no order was placed.",
+    summary: "Order summary",
+    empty: "There is nothing in your cart yet.",
+    back: "Back to the pantry",
+    subtotal: "Subtotal",
+    qty: "Qty",
+  },
+};
+
+const vi: typeof en = {
+  cart: "Giỏ hàng",
+  open: (n) => (n === 0 ? "Mở giỏ hàng" : `Mở giỏ hàng, ${n} sản phẩm`),
+  close: "Đóng giỏ hàng",
+  empty: "Giỏ hàng đang trống.",
+  emptyHint: "Những hũ ngon vẫn đang chờ trong gian bếp.",
+  browse: "Đến gian bếp",
+  subtotal: "Tạm tính",
+  checkout: "Thanh toán",
+  note: "Phí vận chuyển và thuế được tính khi thanh toán.",
+  remove: (name) => `Xóa ${name}`,
+  decrease: (name) => `Giảm số lượng ${name}`,
+  increase: (name) => `Tăng số lượng ${name}`,
+  quantity: "Số lượng",
+  add: "Thêm vào giỏ",
+  adding: "Đang thêm…",
+  added: "Đã thêm",
+  error: "Có lỗi xảy ra. Vui lòng thử lại.",
+  demo: {
+    title: "Thanh toán",
+    kicker: "Bản demo portfolio",
+    body: "GÁNH là dự án concept nên không có bước thanh toán thật. Ở cửa hàng thật, bước này chuyển giỏ hàng của bạn sang trang thanh toán của Shopify. Không có khoản nào bị tính và không có đơn hàng nào được tạo.",
+    summary: "Tóm tắt đơn hàng",
+    empty: "Giỏ hàng của bạn đang trống.",
+    back: "Quay lại gian bếp",
+    subtotal: "Tạm tính",
+    qty: "SL",
+  },
+};
+
+export const cartCopy = (locale: Locale) => (locale === "vi" ? vi : en);

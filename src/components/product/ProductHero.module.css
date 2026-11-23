@@ -1,0 +1,246 @@
+.hero {
+  position: relative;
+  overflow-x: clip;
+  --ph-title-fall: 44vh;
+  --ph-meta-shift: 0px;
+  --ph-jar-rise: -24vh;
+  --ph-jar-rotate: 20deg;
+  --ph-jar-scale-from: 1;
+  --ph-jar-scale-to: 0.8;
+  --ph-jar-w: clamp(220px, 29vw, 600px);
+  --ph-jar-top: 74%;
+}
+
+.stage {
+  --ph: 0;
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  min-height: 560px;
+}
+
+/* ---- title ---- */
+
+.title {
+  position: absolute;
+  left: 50%;
+  top: var(--ph-title-rest-y, 44%);
+  z-index: 1;
+  width: 95%;
+  margin: 0;
+  color: var(--c-red);
+  font-size: calc(
+    clamp(4rem, calc(2.9rem + 9vw), 999999px) * var(--ph-title-fit, 1)
+  );
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+  text-align: center;
+  text-transform: uppercase;
+  transform: translate(-50%, calc(-50% + var(--ph) * var(--ph-title-fall)));
+  will-change: transform;
+}
+
+.word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.char {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 0.4em, 0) rotate(8deg);
+  transform-origin: 0 100%;
+}
+
+.stage[data-play] .char {
+  animation: charIn 1s var(--ease-out) both;
+  animation-delay: calc(0.1s + var(--i) * 0.045s);
+}
+
+@keyframes charIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.4em, 0) rotate(8deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- meta ---- */
+
+.meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-inline: calc(100% / 12);
+  pointer-events: none;
+}
+
+.metaItem {
+  margin: 0;
+  color: var(--c-lacquer);
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.45rem, calc(1rem + 1.05vw), 2.6rem);
+  line-height: 1.1;
+  opacity: 0;
+  transform: translateY(calc(var(--ph) * var(--ph-meta-shift)));
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.stage[data-play] .metaItem {
+  animation: metaIn 0.9s var(--ease-out) 0.35s both;
+}
+
+.stage[data-play] .metaRight {
+  animation-delay: 0.45s;
+}
+
+@keyframes metaIn {
+  from {
+    opacity: 0;
+    translate: 0 0.6em;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.metaLeft {
+  max-width: 220px;
+  transition: color 0.3s ease;
+}
+
+.metaLeft:hover {
+  color: var(--c-red);
+}
+
+.metaRight {
+  text-align: right;
+}
+
+/* ---- jar ---- */
+
+.jar {
+  position: absolute;
+  left: 50%;
+  top: var(--ph-jar-top);
+  z-index: 2;
+  width: var(--ph-jar-w);
+  aspect-ratio: 630 / 1013;
+  transform: translateX(-50%) translateY(calc(var(--ph) * var(--ph-jar-rise)))
+    rotate(calc(var(--ph) * var(--ph-jar-rotate)))
+    scale(
+      calc(
+        var(--ph-jar-scale-from) + var(--ph) *
+          (var(--ph-jar-scale-to) - var(--ph-jar-scale-from))
+      )
+    );
+  will-change: transform;
+}
+
+.jarInner {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translate3d(0, 40vh, 0);
+}
+
+.stage[data-play] .jarInner {
+  animation: jarRise 1.4s var(--ease-out) 0.2s both;
+}
+
+.jar[data-no-rise] .jarInner {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes jarRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 40vh, 0);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.jarImg,
+.jarLabel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.jarImg {
+  object-fit: contain;
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    --ph-jar-scale-to: 0.7;
+    --ph-jar-w: clamp(200px, 40vw, 380px);
+    --ph-jar-top: 64%;
+  }
+
+  .title {
+    font-size: calc(
+      clamp(3rem, calc(1rem + 11vw), 999999px) * var(--ph-title-fit, 1)
+    );
+    line-height: 1.02;
+  }
+
+  .meta {
+    bottom: auto;
+    top: 30%;
+    justify-content: center;
+    padding-inline: var(--pad);
+    text-align: center;
+  }
+
+  .metaLeft {
+    max-width: none;
+  }
+
+  .metaRight {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    --ph-jar-scale-to: 0.64;
+    --ph-jar-w: 56vw;
+    --ph-jar-top: 60%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .char,
+  .metaItem,
+  .jarInner,
+  .stage[data-play] .char,
+  .stage[data-play] .metaItem,
+  .stage[data-play] .jarInner {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

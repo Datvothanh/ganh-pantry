@@ -1,6 +1,15 @@
-/** Placeholder mount point; the commerce lane replaces this with the cart button. */
+"use client";
+
+import { CartButton } from "@/components/cart/CartButton";
+import { CartProvider } from "@/components/cart/CartProvider";
+
+/** Header mount point: the round cart button with its count badge; the provider owns the drawer. */
 export function HeaderCartSlot() {
-  return null;
+  return (
+    <CartProvider>
+      <CartButton />
+    </CartProvider>
+  );
 }
 
 export default HeaderCartSlot;

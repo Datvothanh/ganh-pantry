@@ -1,0 +1,99 @@
+.row {
+  --photo-w: 61vw;
+  --photo-gap: 40px;
+  --photo-bleed: 16%;
+  margin-top: clamp(80px, 9vw, 180px);
+  overflow: hidden;
+  width: 100%;
+}
+
+.hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: calc(var(--photo-w) * 702 / 980);
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.row[data-dragging] .track {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.track:focus-visible {
+  outline: 2px solid var(--c-red);
+  outline-offset: -6px;
+}
+
+.slide {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--photo-w);
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  border-radius: clamp(14px, 1.6vw, 28px);
+  background: var(--tile, var(--c-cream));
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  will-change: transform;
+}
+
+.row[data-ready] .slide {
+  opacity: 1;
+}
+
+.img {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: calc(100% + var(--photo-bleed) * 2);
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  transform: translate3d(-50%, 0, 0);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.jar {
+  position: absolute;
+  left: 50%;
+  bottom: -14%;
+  height: 102%;
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%) rotate(-4deg);
+  filter: drop-shadow(0 30px 40px rgb(43 26 20 / 0.22));
+  pointer-events: none;
+}
+
+.slide:nth-child(even) .jar {
+  bottom: auto;
+  top: 8%;
+  height: 84%;
+  transform: translateX(-50%) rotate(5deg);
+}
+
+@media (max-width: 1024px) {
+  .row {
+    --photo-w: 74vw;
+    --photo-gap: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .row {
+    --photo-w: 84vw;
+    --photo-gap: 16px;
+  }
+}

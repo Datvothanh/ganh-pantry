@@ -11,6 +11,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "labels": "node scripts/labels/generate.mjs",
+    "composites": "node scripts/composites.mjs",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "check:lane": "npm run lint && npm run typecheck && npm test && next build --webpack"
   },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { JarFlightLayer } from "@/components/flight";
 import { Footer } from "@/components/footer/Footer";
 import { Header } from "@/components/header/Header";
 import { INTRO_BOOT_SCRIPT } from "@/components/loader/boot";
@@ -44,6 +45,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <Header locale={locale} />
           {children}
           <Footer locale={locale} />
+          <JarFlightLayer />
         </Shell>
       </body>
     </html>
