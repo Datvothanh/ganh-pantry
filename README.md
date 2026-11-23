@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ganh
 
-## Getting Started
+Ganh is a small storefront for Vietnamese jams and preserves, built with Next.js (App Router, Cache
+Components) in English and Vietnamese. It has a 3D hero, product pages with a buy bar, and a cart
+drawer. Products and the cart come from a commerce adapter: Shopify when configured, a local mock
+otherwise.
 
-First, run the development server:
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # optional, see "Shopify" below
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Next.js dev server. |
+| `npm run check` | Lint, typecheck, unit tests, then `next build` (Turbopack). |
+| `npm run check:lane` | Same checks with `next build --webpack`. Use this one in lanes and CI-like runs. |
+| `npm run check:shopify` | Builds and starts the site against a local fake Storefront API and asserts that a product page shows the Shopify price. |
+| `npm run e2e` | Playwright tests (`tests/e2e`). Needs a production build first (`npm run build`); the config starts `next start` with `GANH_DEV_ROUTES=1`. Set `E2E_PORT` to change the port (default 3100). |
+| `npm run labels` | Renders jar labels to `public/labels/<handle>.png` and motifs to `public/motifs/`. |
+| `npm run composites` | Renders `public/products/<handle>.webp` (jar photo plus label) through the dev route `/dev/composite.html`. Uses `sharp`. |
+| `python scripts/photos.py <stage_dir>` (photos) | Builds `public/photos/<handle>/` from staged photos plus a studio packshot. |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Shopify
 
-## Learn More
+The site talks to the Shopify Storefront API when both of these are set (see `.env.example`):
 
-To learn more about Next.js, take a look at the following resources:
+- `SHOPIFY_STORE_DOMAIN`: for example `my-shop.myshopify.com`
+- `SHOPIFY_STOREFRONT_TOKEN`: Storefront API access token
+- `SHOPIFY_API_VERSION`: optional, defaults to `2026-10`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Product prices and availability are then read from Shopify, and the cart is a Shopify cart that
+hands off to Shopify checkout. Verify a store with
+`node scripts/shopify-smoke.mjs [handle]`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+If either of the first two variables is missing, the site uses the mock adapter: products and prices
+from `src/content/products.ts` and an in-memory cart. Everything works without any account, which is
+the default for local development and tests.
 
-## Deploy on Vercel
+## Dev routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`/dev/cart/harness.html` (cart e2e) and `/dev/composite.html` (`npm run composites`) return 404 in
+production builds unless `GANH_DEV_ROUTES=1` is set in the environment of the running server. The
+variable is read per request, not at build time.

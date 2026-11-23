@@ -14,6 +14,17 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const first = pathname.split("/")[1];
 
+  // Dev-only routes (src/app/dev): 404 in production unless GANH_DEV_ROUTES=1, read per request.
+  // This must happen here: once the page shell streams, a status can no longer change.
+  if (first === "dev") {
+    if (process.env.NODE_ENV === "production" && process.env.GANH_DEV_ROUTES !== "1") {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${defaultLocale}/not-found`;
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
+  }
+
   if (first === defaultLocale) {
     const url = request.nextUrl.clone();
     url.pathname = stripLocale(pathname);
@@ -37,6 +48,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals and any path with a file extension (public assets).
-  matcher: ["/((?!_next/|api/|.*\\.[a-z0-9]+$).*)"],
+  // Skip Next internals and any path with a file extension (public assets), except /dev/*
+  // (its ".html" routes are gated above).
+  matcher: ["/dev/:path*", "/((?!_next/|api/|.*\\.[a-z0-9]+$).*)"],
 };
