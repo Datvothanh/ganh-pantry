@@ -7,8 +7,12 @@ export { formatMoney } from "./format";
 
 type Env = Record<string, string | undefined>;
 
-/** Shopify when `SHOPIFY_STORE_DOMAIN` and `SHOPIFY_STOREFRONT_TOKEN` are set, otherwise the mock. */
+/**
+ * Shopify when `SHOPIFY_STORE_DOMAIN` and `SHOPIFY_STOREFRONT_TOKEN` are set, otherwise the mock.
+ * `GANH_COMMERCE=mock` forces the mock (the e2e server sets it so tests never touch a real store).
+ */
 export function createCommerce(env: Env): CommerceAdapter {
+  if (env.GANH_COMMERCE?.trim() === "mock") return createMockAdapter();
   const domain = env.SHOPIFY_STORE_DOMAIN?.trim();
   const token = env.SHOPIFY_STOREFRONT_TOKEN?.trim();
   if (domain && token) {

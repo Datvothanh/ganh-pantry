@@ -100,6 +100,11 @@ function parseFilter(value: string): FilterPart[] | null {
 }
 
 function setFilter(f: Flight, e: number) {
+  // Fully eased: no filter at all (also drops one we could not parse and ease).
+  if (e >= 1) {
+    if (f.clone.style.filter) f.clone.style.filter = "none";
+    return;
+  }
   if (!f.filter.length) return;
   f.clone.style.filter = f.filter
     .map((p) => `${p.name}(${(p.value + (p.rest - p.value) * e).toFixed(3)}${p.unit})`)

@@ -10,6 +10,8 @@ const en = {
   subtotal: "Subtotal",
   checkout: "Checkout",
   note: "Shipping and taxes are calculated at checkout.",
+  storePassword: (pw: string) =>
+    `Demo store: Shopify asks for the password "${pw}". After entering it, click Checkout again. Payments run in test mode.`,
   remove: (name: string) => `Remove ${name}`,
   decrease: (name: string) => `Decrease quantity of ${name}`,
   increase: (name: string) => `Increase quantity of ${name}`,
@@ -42,6 +44,8 @@ const vi: typeof en = {
   subtotal: "Tạm tính",
   checkout: "Thanh toán",
   note: "Phí vận chuyển và thuế được tính khi thanh toán.",
+  storePassword: (pw) =>
+    `Cửa hàng demo: Shopify sẽ hỏi mật khẩu "${pw}". Nhập xong, bấm Thanh toán lần nữa. Thanh toán chạy ở chế độ thử.`,
   remove: (name) => `Xóa ${name}`,
   decrease: (name) => `Giảm số lượng ${name}`,
   increase: (name) => `Tăng số lượng ${name}`,

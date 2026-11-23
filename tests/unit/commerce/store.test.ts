@@ -70,4 +70,19 @@ describe("cart store", () => {
     settle({ ok: true, cart: cart(2) });
     await done;
   });
+
+  it("clears a stale error when the drawer is closed or reopened", async () => {
+    const store = await freshStore();
+    actions.getCartAction.mockResolvedValue(null);
+    await store.loadCart();
+    actions.addToCartAction.mockResolvedValue({ ok: false, error: "sold out" });
+    await store.addToCart("mut-gung", "220g", 1);
+    store.openCart();
+    expect(store.getCartSnapshot().error).toBeNull();
+
+    await store.addToCart("mut-gung", "220g", 1);
+    expect(store.getCartSnapshot().error).toBe("sold out");
+    store.closeCart();
+    expect(store.getCartSnapshot().error).toBeNull();
+  });
 });

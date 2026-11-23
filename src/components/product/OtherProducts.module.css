@@ -46,7 +46,8 @@
   flex: 0 0 calc(25vw - var(--pad) * 2 / 4 - var(--gap) * 3 / 4);
   aspect-ratio: 367.5 / 480.8;
   overflow: hidden;
-  border-radius: clamp(14px, 1.6vw, 28px);
+  --card-radius: clamp(14px, 1.6vw, 28px);
+  border-radius: var(--card-radius);
   background: var(--card-bg);
   transition: transform 0.6s var(--ease-out);
   isolation: isolate;
@@ -118,7 +119,8 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  border-radius: inherit;
+  /* The link itself is unrounded; match the card so the focus ring follows its corners. */
+  border-radius: var(--card-radius);
 }
 
 .link:focus-visible {
@@ -197,7 +199,8 @@
   }
 }
 
-.card:focus-within .pop {
+/* Keyboard focus only: a clicked quick-add keeps focus but must not hold the motifs open. */
+.card:has(:focus-visible) .pop {
   opacity: 1;
   transform: translate(-50%, -50%) scale(var(--s)) rotate(var(--r));
 }

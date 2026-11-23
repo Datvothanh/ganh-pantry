@@ -30,3 +30,12 @@ export function liveVariants(product: Product, live: CommerceProduct | null): Li
 export function firstAvailableVariantId(product: Product, live: CommerceProduct | null): string | undefined {
   return liveVariants(product, live).find((v) => v.available)?.id;
 }
+
+/** Quick-add target: the first buyable variant and its live unit price (for the optimistic line). */
+export function quickAddTarget(
+  product: Product,
+  live: CommerceProduct | null,
+): { variantId: string; price: Money } | undefined {
+  const v = liveVariants(product, live).find((x) => x.available);
+  return v ? { variantId: v.id, price: v.price } : undefined;
+}

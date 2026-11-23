@@ -12,6 +12,7 @@ import { useCursorLabel } from "@/components/cursor";
 import { MotifSvg } from "@/components/motifs";
 import { prefersReducedMotion } from "@/components/motion/useReducedMotion";
 import type { Motif } from "@/content/products";
+import type { Money } from "@/lib/commerce/types";
 import { openCart, addToCart } from "@/components/cart/store";
 import styles from "./OtherProducts.module.css";
 
@@ -24,8 +25,8 @@ export interface OtherCard {
   card: string;
   accent: string;
   motif: Motif;
-  /** Quick-add "+" button: the variant it adds and its accessible label. */
-  quickAdd?: { variantId: string; label: string };
+  /** Quick-add "+" button: the variant it adds, its live unit price and its accessible label. */
+  quickAdd?: { variantId: string; price: Money; label: string };
 }
 
 interface Props {
@@ -260,7 +261,7 @@ export function OtherProducts({ title, cards, discover }: Props) {
                   e.preventDefault();
                   e.stopPropagation();
                   openCart();
-                  void addToCart(c.handle, c.quickAdd!.variantId, 1);
+                  void addToCart(c.handle, c.quickAdd!.variantId, 1, c.quickAdd!.price);
                 }}
               >
                 <span aria-hidden="true">+</span>

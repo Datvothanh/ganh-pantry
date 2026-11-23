@@ -11,8 +11,9 @@
   --jar-marquee-top: 55%;
   --jar-marquee-angle: 10deg;
   --jar-marquee-h: 560px;
-  --jar-item-w: 200px;
-  --jar-item-h: 320px;
+  /* Mirrors computeLayout() (lib/jar-slider) so the server layout matches the engine's sizes. */
+  --jar-item-w: min(calc(100vw / 4 * 0.61617), calc(72vh * 630 / 1013));
+  --jar-item-h: calc(var(--jar-item-w) * 1013 / 630);
   --jar-intro: 0;
   --jar-parallax-x: 0;
   --jar-parallax-y: 0;
@@ -168,12 +169,22 @@
 @media (max-width: 1024px) {
   .stage {
     --jar-marquee-top: 45%;
+    --jar-item-w: min(calc(100vw / 3 * 0.905625), calc(72vh * 630 / 1013));
+  }
+}
+
+/* The tall phone strip would cover the shape's crown: stand the shape on the strip so the
+   cream prompt above it keeps the lacquer behind it. */
+@media (max-width: 720px) {
+  .shapeLayer {
+    bottom: var(--footer-strip-h, 0px);
   }
 }
 
 @media (max-width: 480px) {
   .stage {
     --jar-marquee-top: 46%;
+    --jar-item-w: min(calc(100vw / 3 * 0.8395), calc(72vh * 630 / 1013));
   }
   .shapeLayer {
     width: 125vw;
@@ -189,13 +200,15 @@
 
 .stage[data-static] .wrap,
 :global(html:not([data-motion])) .stage[data-jar-slider-ready="false"] .wrap {
+  /* End above the fixed footer strip so it never covers the row's scrollbar. */
+  bottom: var(--footer-strip-h, 0px);
   display: flex;
   align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
   touch-action: auto;
   cursor: auto;
-  padding: var(--header-h) var(--pad) calc(70px + var(--footer-strip-h, 0px));
+  padding: var(--header-h) var(--pad) 70px;
 }
 
 .stage[data-static] .marquee,

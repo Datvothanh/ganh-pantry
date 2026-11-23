@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 // Skip the session loader so the page is interactive right away.
 test.beforeEach(async ({ page }) => {
@@ -26,6 +26,41 @@ for (const path of ["/products/mut-gung", "/pantry"]) {
         1,
       );
     }
+  });
+}
+
+/** Highest motif opacity in a card. */
+const motifOpacity = (card: Locator) =>
+  card
+    .locator("[data-motif]")
+    .evaluateAll((els) => Math.max(...els.map((e) => Number(getComputedStyle(e).opacity))));
+
+for (const path of ["/products/mut-gung", "/pantry"]) {
+  test(`no motif stays popped after a quick-add click on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    const card = page.locator("[data-product-card]").filter({ has: page.locator("button[data-quick-add]") }).first();
+    await card.scrollIntoViewIfNeeded();
+    await card.hover();
+    await card.locator("button[data-quick-add]").click();
+    // Close the cart with the pointer: focus returns to the quick-add button, but not as keyboard focus.
+    await expect(page.locator("[data-cart-root]")).toHaveAttribute("data-state", "open");
+    await page.locator("[data-cart-drawer] header button").click();
+    await expect(page.locator("[data-cart-root]")).toHaveAttribute("data-state", "closed");
+    await page.mouse.move(5, 5);
+    await page.waitForTimeout(1000);
+    expect(await motifOpacity(card)).toBe(0);
+  });
+
+  test(`keyboard focus on a card link pops its motifs on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    const card = page.locator("[data-product-card]").first();
+    await card.scrollIntoViewIfNeeded();
+    await page.mouse.move(5, 5);
+    await card.locator("a").focus();
+    // Programmatic focus after a keypress counts as keyboard focus.
+    await page.keyboard.press("Shift");
+    await card.locator("a").focus();
+    await expect.poll(() => motifOpacity(card)).toBe(1);
   });
 }
 

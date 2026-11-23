@@ -14,6 +14,11 @@ describe("mock commerce adapter", () => {
     ).toBe("shopify");
   });
 
+  it("is forced by GANH_COMMERCE=mock even when Shopify env is set", () => {
+    const env = { SHOPIFY_STORE_DOMAIN: "x.myshopify.com", SHOPIFY_STOREFRONT_TOKEN: "t", GANH_COMMERCE: "mock" };
+    expect(createCommerce(env).kind).toBe("mock");
+  });
+
   it("returns products with prices from the content file", async () => {
     const p = await mock.getProduct("mut-gung");
     expect(p?.variants.map((v) => [v.id, v.price.amount])).toEqual([

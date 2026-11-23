@@ -347,7 +347,21 @@ export function ProductHero({
       </div>
       <div className={styles.reserve} aria-hidden="true">
         <div className={styles.reserveBase} />
-        <div className={styles.probe} data-title={title} lang="vi" />
+        {/* Same word/char boxes as the title so it wraps exactly like it. */}
+        <div className={styles.probe} data-hero-probe="" lang="vi">
+          {words.map((word, wi) => (
+            <span key={wi}>
+              {wi > 0 ? " " : null}
+              <span className={styles.word}>
+                {Array.from(word).map((ch, ci) => (
+                  <span key={ci} className={styles.probeChar}>
+                    {ch}
+                  </span>
+                ))}
+              </span>
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   );

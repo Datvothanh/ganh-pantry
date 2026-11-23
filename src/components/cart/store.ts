@@ -125,8 +125,9 @@ export function removeLine(line: CartLine): Promise<boolean> {
 /** Current state outside React (tests, event handlers). */
 export const getCartSnapshot = (): CartState => state;
 
-export const openCart = () => set({ open: true });
-export const closeCart = () => set({ open: false });
+/** A failed mutation's error belongs to that attempt: drop it when the drawer opens or closes. */
+export const openCart = () => set({ open: true, error: state.pending > 0 ? state.error : null });
+export const closeCart = () => set({ open: false, error: state.pending > 0 ? state.error : null });
 
 export function useCart(): CartState {
   return useSyncExternalStore(

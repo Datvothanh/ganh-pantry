@@ -245,22 +245,29 @@ export function mapCart(raw: RawCart): Cart {
 
 export class ShopifyError extends Error {}
 
+function isLocalHost(domain: string): boolean {
+  try {
+    const { hostname } = new URL(`http://${domain}`);
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
 export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
-  // An explicit `http://` is kept (local fake storefront in scripts/check-shopify-build.mjs).
-  const scheme = /^http:\/\//i.test(config.domain.trim()) ? "http" : "https";
-  const domain = config.domain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  // An explicit `http://` is kept only for a local host (fake storefront in
+  // scripts/check-shopify-build.mjs); the token never travels over plain http elsewhere.
+  const raw = config.domain.trim();
+  const domain = raw.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const scheme = /^http:\/\//i.test(raw) && isLocalHost(domain) ? "http" : "https";
   const endpoint = `${scheme}://${domain}/api/${config.version || DEFAULT_API_VERSION}/graphql.json`;
   const doFetch = config.fetch ?? fetch;
 
   /**
-   * `cache: "no-store"` for cart reads and mutations. Product reads leave fetch caching to the
-   * caller (`getLiveProduct` wraps them in `use cache`).
+   * Cart reads and mutations pass `cache: "no-store"` explicitly. Product reads pass nothing and
+   * leave fetch caching to the caller (`getLiveProduct` wraps them in `use cache`).
    */
-  async function gql<T>(
-    query: string,
-    variables: Record<string, unknown> = {},
-    cache: RequestCache | undefined = "no-store",
-  ): Promise<T> {
+  async function gql<T>(query: string, variables: Record<string, unknown>, cache?: RequestCache): Promise<T> {
     const res = await doFetch(endpoint, {
       method: "POST",
       headers: {
@@ -311,7 +318,7 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
   }
 
   async function create(line: { merchandiseId: string; quantity: number }) {
-    const data = await gql<{ cartCreate: CartPayload }>(CART_CREATE, { lines: [line] });
+    const data = await gql<{ cartCreate: CartPayload }>(CART_CREATE, { lines: [line] }, "no-store");
     const cart = unwrap(data.cartCreate);
     if (!cart) throw new ShopifyError("Shopify did not return a cart");
     return cart;
@@ -322,7 +329,7 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
     key: "cartLinesUpdate" | "cartLinesRemove",
     variables: Record<string, unknown>,
   ) {
-    const data = await gql<Record<string, CartPayload>>(query, variables);
+    const data = await gql<Record<string, CartPayload>>(query, variables, "no-store");
     const cart = unwrap(data[key]);
     if (!cart) throw new CartNotFoundError();
     return cart;
@@ -332,16 +339,17 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
     kind: "shopify",
     getProduct: (handle) => getProduct(handle),
     async getCart(cartId) {
-      const data = await gql<{ cart: RawCart | null }>(CART_QUERY, { cartId });
+      const data = await gql<{ cart: RawCart | null }>(CART_QUERY, { cartId }, "no-store");
       return data.cart ? mapCart(data.cart) : null;
     },
     async addLine(cartId, input) {
       const line = await lineFor({ ...input, quantity: Math.min(input.quantity, MAX_LINE_QUANTITY) });
       if (!cartId) return create(line);
-      const data = await gql<{ cartLinesAdd: CartPayload }>(CART_LINES_ADD, {
-        cartId,
-        lines: [line],
-      });
+      const data = await gql<{ cartLinesAdd: CartPayload }>(
+        CART_LINES_ADD,
+        { cartId, lines: [line] },
+        "no-store",
+      );
       // An expired or completed cart comes back as null: start a fresh one.
       return unwrap(data.cartLinesAdd) ?? create(line);
     },

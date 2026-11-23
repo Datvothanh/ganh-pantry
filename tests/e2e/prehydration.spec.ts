@@ -143,3 +143,139 @@ test.describe("footer and tagline", () => {
     await ctx.close();
   });
 });
+
+const skipIntro = (page: Page) =>
+  page.addInitScript(() => {
+    try {
+      sessionStorage.setItem("ganh:intro", "1");
+    } catch {}
+  });
+
+const blockScripts = (page: Page) =>
+  page.route("**/_next/static/**", (route) =>
+    route.request().resourceType() === "script" ? route.abort() : route.continue(),
+  );
+
+/** Every sample point of the prompt's text box lies inside the dark back shape. */
+const promptOnShape = (page: Page) =>
+  page.evaluate(() => {
+    const prompt = document.querySelector("[data-hero-prompt]")!;
+    const range = document.createRange();
+    range.selectNodeContents(prompt);
+    const r = range.getBoundingClientRect();
+    const path = document.querySelector<SVGPathElement>("[data-jar-slider] svg path")!;
+    const inv = path.getScreenCTM()!.inverse();
+    const misses: string[] = [];
+    for (const x of [r.left + 2, r.left + r.width / 2, r.right - 2])
+      for (const y of [r.top + 1, r.bottom - 1]) {
+        const p = new DOMPoint(x, y).matrixTransform(inv);
+        if (!path.isPointInFill(p)) misses.push(`${Math.round(x)},${Math.round(y)}`);
+      }
+    return misses;
+  });
+
+const rect = (l: Locator) => l.evaluate((el) => el.getBoundingClientRect().toJSON() as DOMRect);
+
+async function expectStripAndPrompt(page: Page) {
+  const strip = page.locator("footer[data-footer-strip]");
+  const s = await rect(strip);
+  const vh = await page.evaluate(() => innerHeight);
+  expect(Math.abs(s.bottom - vh)).toBeLessThanOrEqual(1);
+  // The strip never grows past the height the page reserves for it.
+  const reserved = await page.evaluate(() =>
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--footer-strip-h")),
+  );
+  expect(s.height).toBeLessThanOrEqual(reserved + 1);
+  expect(await onTop(strip.getByText(credit))).toBe(true);
+  for (const name of ["Pantry", "Tiếng Việt"]) expect(await onTop(strip.getByRole("link", { name }))).toBe(true);
+
+  const prompt = page.locator("[data-hero-prompt]");
+  await expect.poll(() => paintedOpacity(prompt)).toBeGreaterThan(0.9);
+  await expect.poll(() => paintedOpacity(page.locator("[data-jar-slider] svg").first())).toBeGreaterThan(0.9);
+  const p = await rect(prompt);
+  expect(p.top).toBeGreaterThanOrEqual(0);
+  expect(p.bottom).toBeLessThanOrEqual(s.top - 8);
+  expect(await prompt.evaluate((el) => getComputedStyle(el).color)).toBe("rgb(255, 248, 238)");
+  // Cream text needs the lacquer shape behind it, not the paper.
+  await expect.poll(() => promptOnShape(page)).toEqual([]);
+}
+
+async function expectRowAboveStrip(page: Page) {
+  const s = await rect(page.locator("footer[data-footer-strip]"));
+  const wrap = await rect(page.locator("[data-jar-slider-wrap]"));
+  expect(wrap.bottom).toBeLessThanOrEqual(s.top + 1);
+  const jar = await rect(page.locator("[data-jar-slider-item]").first());
+  expect(jar.bottom).toBeLessThanOrEqual(s.top);
+}
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 360, height: 640 },
+]) {
+  test.describe(`phone ${viewport.width}x${viewport.height}`, () => {
+    test.use({ viewport });
+
+    test("footer strip and prompt sit on the lacquer, above the strip", async ({ page }) => {
+      await skipIntro(page);
+      await page.goto("/");
+      await expect(page.locator("[data-jar-slider]")).toHaveAttribute("data-intro", "done");
+      await expectStripAndPrompt(page);
+    });
+
+    test.describe("reduced motion", () => {
+      test.use({ reducedMotion: "reduce" });
+
+      test("static row ends above the strip, prompt stays readable", async ({ page }) => {
+        await page.goto("/");
+        await expect(page.locator("[data-jar-slider]")).toHaveAttribute("data-jar-slider-ready", "true");
+        await expectRowAboveStrip(page);
+        await expectStripAndPrompt(page);
+      });
+
+      test("static row ends above the strip before hydration", async ({ page }) => {
+        await blockScripts(page);
+        await page.goto("/");
+        await expectRowAboveStrip(page);
+        await expectStripAndPrompt(page);
+      });
+    });
+  });
+}
+
+test.describe("hydration", () => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    test(`reduced motion: jar size holds across hydration at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      let release!: () => void;
+      const gate = new Promise<void>((r) => (release = r));
+      await page.route("**/_next/static/**", async (route) => {
+        if (route.request().resourceType() === "script") await gate;
+        await route.continue();
+      });
+      await page.goto("/", { waitUntil: "commit" });
+      const stage = page.locator("[data-jar-slider]");
+      const track = page.locator("[data-jar-slider-track]");
+      await expect(track).toHaveCSS("display", "flex");
+      await expect(stage).toHaveAttribute("data-jar-slider-ready", "false");
+      const first = page.locator("[data-jar-slider-item]").first();
+      const before = await rect(first);
+      release();
+      await expect(stage).toHaveAttribute("data-jar-slider-ready", "true");
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const after = await rect(first);
+      expect(Math.abs(after.width - before.width)).toBeLessThanOrEqual(2);
+      expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
+    });
+  }
+
+  test("slider wrap leaves vertical swipes to the page", async ({ page }) => {
+    await skipIntro(page);
+    await page.goto("/");
+    await expect(page.locator("[data-jar-slider]")).toHaveAttribute("data-jar-slider-ready", "true");
+    await expect(page.locator("[data-jar-slider-wrap]")).toHaveCSS("touch-action", "pan-y");
+  });
+});

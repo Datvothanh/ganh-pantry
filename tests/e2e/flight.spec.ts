@@ -81,7 +81,7 @@ test("clicking a jar flies it into the product hero", async ({ page }) => {
 test("the flight clone starts with the source jar's filter", async ({ page }) => {
   const target = await ready(page);
   await page.evaluate(() => {
-    const w = window as unknown as { __srcFilter: string; __cloneFilter: string };
+    const w = window as unknown as { __srcFilter: string; __cloneFilter: string; __landFilter: string };
     // Source filter at the click (capture runs before the flight hides the source).
     window.addEventListener(
       "click",
@@ -96,6 +96,13 @@ test("the flight clone starts with the source jar's filter", async ({ page }) =>
       for (const r of records)
         for (const n of r.addedNodes)
           if (n instanceof HTMLElement && n.matches("[data-jar-flight-clone]")) w.__cloneFilter = getComputedStyle(n).filter;
+    }).observe(document, { childList: true, subtree: true });
+    // Clone filter when it lands (its inline style, read as it is removed).
+    new MutationObserver((records) => {
+      for (const r of records)
+        for (const n of r.removedNodes)
+          if (n instanceof HTMLElement && n.matches("[data-jar-flight-clone]"))
+            w.__landFilter = n.style.filter;
     }).observe(document, { childList: true, subtree: true });
   });
   await page.mouse.click(target.x, target.y);
@@ -119,6 +126,9 @@ test("the flight clone starts with the source jar's filter", async ({ page }) =>
     { timeout: 6_000 },
   );
   await expect(page.locator("[data-jar-flight-clone]")).toHaveCount(0, { timeout: 6_000 });
+  // ...and reaches no filter at all by the time it hands over to the hero jar.
+  const landed = await page.evaluate(() => (window as unknown as { __landFilter?: string }).__landFilter);
+  expect(landed).toBe("none");
 });
 
 test("browser back restores the slider", async ({ page }) => {

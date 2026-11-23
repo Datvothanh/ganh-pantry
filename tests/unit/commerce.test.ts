@@ -220,10 +220,41 @@ describe("shopify adapter", () => {
     expect(String(f.mock.calls[0][0])).toBe("http://127.0.0.1:4010/api/2026-10/graphql.json");
   });
 
-  it("keeps an explicit http:// domain (local fake storefront)", async () => {
-    const f = mockFetch({ data: { product: null } });
-    await createShopifyAdapter({ domain: "http://127.0.0.1:4010/", token: "t", fetch: f }).getProduct("x");
-    expect(String(f.mock.calls[0][0])).toBe("http://127.0.0.1:4010/api/2026-10/graphql.json");
+  it("only sends the token over http to a local host", async () => {
+    const urlFor = async (domain: string) => {
+      const f = mockFetch({ data: { product: null } });
+      await createShopifyAdapter({ domain, token: "t", fetch: f }).getProduct("x");
+      return String(f.mock.calls[0][0]);
+    };
+    expect(await urlFor("http://localhost:3000")).toBe("http://localhost:3000/api/2026-10/graphql.json");
+    expect(await urlFor("http://shop.example")).toBe("https://shop.example/api/2026-10/graphql.json");
+    expect(await urlFor("http://localhost@evil.example")).toBe("https://localhost@evil.example/api/2026-10/graphql.json");
+    expect(await urlFor("http://localhost.evil.example")).toBe(
+      "https://localhost.evil.example/api/2026-10/graphql.json",
+    );
+  });
+
+  it("leaves fetch caching to the caller for product reads and pins no-store on cart calls", async () => {
+    const product = mockFetch({ data: { product: rawProduct } });
+    await adapterWith(product).getProduct("mut-gung");
+    expect(product.mock.calls[0][1]).not.toHaveProperty("cache");
+
+    const cartRead = mockFetch({ data: { cart: null } });
+    await adapterWith(cartRead).getCart("c");
+    expect(cartRead.mock.calls[0][1]).toHaveProperty("cache", "no-store");
+
+    const add = mockFetch(
+      { data: { product: rawProduct } },
+      { data: { cartCreate: { cart: rawCart([{ id: "1", qty: 1, weight: "220g", price: "9.00" }]) } } },
+    );
+    await adapterWith(add).addLine(undefined, { handle: "mut-gung", variantId: "220g", quantity: 1 });
+    expect(add.mock.calls.map((c) => c[1]?.cache)).toEqual(["no-store", "no-store"]);
+
+    const update = mockFetch({
+      data: { cartLinesUpdate: { cart: rawCart([{ id: "1", qty: 2, weight: "220g", price: "9.00" }]) } },
+    });
+    await adapterWith(update).updateLine("c", "1", 2);
+    expect(update.mock.calls[0][1]).toHaveProperty("cache", "no-store");
   });
 
   it("returns null for a missing cart", async () => {

@@ -94,7 +94,7 @@ export function PantryGrid({
                 e.stopPropagation();
                 cursor.hide();
                 openCart();
-                void addToCart(c.handle, c.quickAdd!.variantId, 1);
+                void addToCart(c.handle, c.quickAdd!.variantId, 1, c.quickAdd!.price);
               }}
             >
               <span aria-hidden="true">+</span>

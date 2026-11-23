@@ -8,7 +8,7 @@ import { getDict } from "@/content/dict";
 import { href } from "@/lib/i18n";
 import { formatMoney } from "@/lib/commerce/format";
 import { getLiveProduct } from "@/lib/commerce/live";
-import { firstAvailableVariantId, liveVariants } from "@/lib/commerce/variants";
+import { liveVariants, quickAddTarget } from "@/lib/commerce/variants";
 import { productPhotos } from "@/lib/photos";
 import {
   BuyBlock,
@@ -76,7 +76,7 @@ export async function ProductPage({
       }));
 
   const cards: OtherCard[] = rest.map((p, i) => {
-    const variantId = firstAvailableVariantId(p, restLive[i]);
+    const target = quickAddTarget(p, restLive[i]);
     return {
       handle: p.handle,
       href: href(locale, `/products/${p.handle}`),
@@ -86,7 +86,7 @@ export async function ProductPage({
       card: p.colors.card,
       accent: p.colors.accent,
       motif: p.motif,
-      quickAdd: variantId ? { variantId, label: quickAdd(p.nameVi) } : undefined,
+      quickAdd: target ? { ...target, label: quickAdd(p.nameVi) } : undefined,
     };
   });
 

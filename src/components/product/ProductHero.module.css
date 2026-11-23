@@ -197,6 +197,9 @@
  * The probe is a half-size, half-width copy of the title (so it wraps like the real one and is half
  * as tall) pushed to where the meta row ends: its bottom edge is the meta end pose + gap, i.e.
  * jar centre + half the title + META_GAP + meta height + CLEAR_GAP, the other term of layout().
+ * It sets the title font, and ignores --ph-title-fit (set only once JS runs) so it is the same box
+ * with and without JS; instead it is capped like layout() caps the title: the space between the
+ * header (2 * --pad-y + the logo, at most 30% of the stage) + TITLE_GAP_TOP and the jar - TITLE_GAP_JAR.
  */
 .reserve {
   display: grid;
@@ -220,7 +223,16 @@
         clamp(1.45rem, calc(1rem + 1.05vw), 2.6rem)
     )
     auto 0;
-  font-size: calc(var(--ph-title-size) * var(--ph-title-fit, 1) / 2);
+  max-height: calc(
+    (
+        var(--ph-stage-h) * var(--ph-jar-top) - 24px - 16px -
+          min(var(--pad-y) * 2 + 80px, var(--ph-stage-h) * 0.3)
+      ) / 2
+  );
+  overflow: hidden;
+  font-family: var(--font-display), serif;
+  font-size: calc(var(--ph-title-size) / 2);
+  font-weight: 400;
   line-height: 0.98;
   letter-spacing: -0.015em;
   text-align: center;
@@ -229,8 +241,8 @@
   pointer-events: none;
 }
 
-.probe::before {
-  content: attr(data-title);
+.probeChar {
+  display: inline-block;
 }
 
 @media (max-width: 1024px), (prefers-reduced-motion: reduce) {

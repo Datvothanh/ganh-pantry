@@ -16,7 +16,7 @@ export default defineConfig({
     command: `npx next start -p ${PORT}`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: false,
-    env: { GANH_DEV_ROUTES: "1" },
+    env: { GANH_DEV_ROUTES: "1", GANH_COMMERCE: "mock" },
     timeout: 120_000,
   },
 });

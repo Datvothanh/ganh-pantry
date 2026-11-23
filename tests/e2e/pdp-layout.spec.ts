@@ -23,9 +23,12 @@ async function firstRevealY(
       });
     await page.goto(path);
     if (opts.js) {
+      // Hydrated: the hero's effects ran and announced the jar; then let the font-load relayout settle.
+      await expect(page.locator("[data-jar-target]")).toHaveAttribute("data-hero-ready", "true", { timeout: 10_000 });
       await page.evaluate(() => document.fonts.ready.then(() => undefined));
-      await page.waitForFunction(() => document.querySelector("[data-product-hero]") !== null);
-      await page.waitForTimeout(1500);
+      await page.evaluate(
+        () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
+      );
     }
     return await page.locator("[data-reveal]").first().evaluate((el) => el.getBoundingClientRect().top + scrollY);
   } finally {
@@ -42,21 +45,29 @@ const sizes = [
   { width: 1280, height: 720 },
 ];
 const handles = ["mut-gung", "mat-ong-ca-phe", "ca-phao"];
+// Short desktops with long titles: the meta row's end pose sets the clearance.
+const shortSizes = [
+  { width: 1093, height: 560 },
+  { width: 1100, height: 600 },
+];
+const longHandles = ["ca-phao", "mat-ong-ca-phe", "tuong-ot-toi"];
+const cases = [
+  ...sizes.flatMap((size) => handles.map((handle) => ({ size, handle }))),
+  ...shortSizes.flatMap((size) => longHandles.map((handle) => ({ size, handle }))),
+];
 
 for (const reduced of [false, true]) {
   test.describe(reduced ? "reduced motion" : "full motion", () => {
-    for (const size of sizes) {
-      for (const handle of handles) {
-        test(`PDP intro does not jump after hydration at ${size.width}x${size.height} (${handle})`, async ({
-          browser,
-          baseURL,
-        }) => {
-          const path = `/products/${handle}`;
-          const off = await firstRevealY(browser, baseURL, path, { ...size, js: false, reduced });
-          const on = await firstRevealY(browser, baseURL, path, { ...size, js: true, reduced });
-          expect(Math.abs(on - off), `no-JS y=${off}, JS y=${on}`).toBeLessThanOrEqual(8);
-        });
-      }
+    for (const { size, handle } of cases) {
+      test(`PDP intro does not jump after hydration at ${size.width}x${size.height} (${handle})`, async ({
+        browser,
+        baseURL,
+      }) => {
+        const path = `/products/${handle}`;
+        const off = await firstRevealY(browser, baseURL, path, { ...size, js: false, reduced });
+        const on = await firstRevealY(browser, baseURL, path, { ...size, js: true, reduced });
+        expect(Math.abs(on - off), `no-JS y=${off}, JS y=${on}`).toBeLessThanOrEqual(8);
+      });
     }
   });
 }

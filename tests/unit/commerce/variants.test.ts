@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { productByHandle } from "@/content/products";
-import { firstAvailableVariantId, liveVariants } from "@/lib/commerce/variants";
+import { firstAvailableVariantId, liveVariants, quickAddTarget } from "@/lib/commerce/variants";
 import type { CommerceProduct } from "@/lib/commerce/types";
 
 const gung = productByHandle("mut-gung")!;
@@ -36,5 +36,17 @@ describe("live variants", () => {
   it("picks the first available variant, or none when all are sold out", () => {
     expect(firstAvailableVariantId(gung, live([["220g", 13.5, false], ["314g", 16.5, true]]))).toBe("314g");
     expect(firstAvailableVariantId(gung, live([["220g", 13.5, false], ["314g", 16.5, false]]))).toBeUndefined();
+  });
+
+  it("quick-add targets the first available variant with its live price", () => {
+    expect(quickAddTarget(gung, live([["220g", 13.5, false], ["314g", 16.5, true]]))).toEqual({
+      variantId: "314g",
+      price: { amount: 16.5, currencyCode: "USD" },
+    });
+    expect(quickAddTarget(gung, null)).toEqual({
+      variantId: "220g",
+      price: { amount: 9, currencyCode: "USD" },
+    });
+    expect(quickAddTarget(gung, live([["220g", 13.5, false], ["314g", 16.5, false]]))).toBeUndefined();
   });
 });
