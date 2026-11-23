@@ -1,0 +1,168 @@
+.footer {
+  position: relative;
+  background: var(--c-lacquer);
+  color: var(--c-cream);
+  padding: clamp(56px, 7vw, 150px) var(--pad) 22px;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: 25.4vw;
+  color: var(--c-flame);
+  font-family: var(--font-display), serif;
+  line-height: 0.82;
+  user-select: none;
+}
+
+.word {
+  font-weight: 400;
+  font-size: 23.5vw;
+  letter-spacing: -0.035em;
+}
+
+.tag {
+  font-style: italic;
+  font-weight: 300;
+  font-size: 8.4vw;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-top: 0.05em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 25.4vw 16vw minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 32px 0;
+  margin-top: clamp(60px, 9vw, 150px);
+  padding-bottom: 36px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  font-size: 13px;
+  line-height: 1.4;
+  padding-right: 24px;
+}
+
+.mark {
+  width: 88px;
+  height: 88px;
+  color: var(--c-flame);
+  margin-left: -10px;
+}
+
+.accent,
+.label {
+  color: var(--c-flame);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.label {
+  margin-bottom: 8px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.nav ul {
+  list-style: none;
+}
+
+.nav a,
+.social {
+  transition: color 0.25s ease;
+}
+
+.nav a:hover,
+.social:hover {
+  color: var(--c-flame);
+}
+
+.col {
+  padding-right: 24px;
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+}
+
+.note {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.contact {
+  max-width: 30em;
+  margin-top: 48px;
+  font-size: clamp(16px, 1.35vw, 21px);
+  line-height: 1.45;
+}
+
+.email {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--c-flame);
+  font-size: clamp(16px, 1.35vw, 21px);
+}
+
+.email:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.bottom {
+  border-top: 1px solid rgb(255 248 238 / 0.16);
+  padding-top: 18px;
+}
+
+.credit {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+@media (max-width: 900px) {
+  .wordmark {
+    padding-left: 0;
+  }
+  .word {
+    font-size: 31vw;
+  }
+  .tag {
+    font-size: 13vw;
+  }
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .brand {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .contact {
+    margin-top: 24px;
+  }
+}

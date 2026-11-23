@@ -1,0 +1,266 @@
+.menu {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--c-lacquer);
+  color: var(--c-cream);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.menu[data-state="open"] {
+  animation: curtainIn 0.85s var(--ease-out) both;
+}
+
+.menu[data-state="closing"] {
+  animation: curtainOut 0.6s var(--ease-in-out) both;
+}
+
+@keyframes curtainIn {
+  from {
+    clip-path: inset(0 0 100% 0 round 0 0 40vw 40vw);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 0);
+  }
+}
+
+@keyframes curtainOut {
+  from {
+    clip-path: inset(0 0 0 0 round 0);
+  }
+  to {
+    clip-path: inset(0 0 100% 0 round 0 0 40vw 40vw);
+  }
+}
+
+.inner {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pad-y) var(--pad) calc(var(--pad-y) * 0.8);
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--c-cream);
+  font: 600 14px/1 var(--font-text), sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.close > span:first-child {
+  display: grid;
+  place-items: center;
+  height: 38px;
+  padding: 0 22px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.closeRound {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--c-flame);
+  transition: transform 0.4s var(--ease-spring);
+}
+
+.close:hover .closeRound {
+  transform: rotate(90deg);
+}
+
+.cross {
+  position: relative;
+  width: 12px;
+  height: 12px;
+}
+
+.cross::before,
+.cross::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 1.5px;
+  background: currentColor;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.cross::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 4vw;
+  align-items: center;
+  padding: 6vh 0 4vh;
+}
+
+.primary {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.04em;
+}
+
+.big {
+  display: inline-block;
+  font-family: var(--font-display), serif;
+  font-weight: 300;
+  font-size: clamp(64px, 10.5vw, 220px);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--c-flame);
+  transition: color 0.3s ease;
+}
+
+.big:hover,
+.big[aria-current="page"] {
+  color: var(--c-cream);
+}
+
+.menu[data-state="open"] .big {
+  animation: rise 0.9s var(--ease-out) both;
+  animation-delay: calc(0.25s + var(--i) * 0.08s);
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 36px 32px;
+}
+
+.menu[data-state="open"] .group {
+  animation: fadeUp 0.8s var(--ease-out) both;
+  animation-delay: calc(0.3s + var(--i) * 0.07s);
+}
+
+.groupTitle {
+  margin-bottom: 12px;
+  color: var(--c-gold);
+  font: 600 12px/1 var(--font-text), sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.group ul {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.product:hover {
+  background: rgb(255 248 238 / 0.08);
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--tint);
+  flex: none;
+  transition: transform 0.45s var(--ease-spring);
+}
+
+.thumb img {
+  width: 30px;
+  height: auto;
+}
+
+.product:hover .thumb {
+  transform: rotate(-6deg) translateY(-2px);
+}
+
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vi {
+  font-family: var(--font-display), serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.en {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.credit {
+  max-width: 64ch;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 520px) {
+  .products {
+    grid-template-columns: 1fr;
+  }
+}
