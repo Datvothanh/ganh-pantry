@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Builds and serves the site against the local fake Storefront (scripts/fake-storefront.mjs)
 // to prove that a Shopify-connected build prerenders under Cache Components and that the
-// PDP shows live prices and availability. A second build against a Storefront that answers 500
-// must still succeed and fall back to the catalogue prices.
+// PDP shows live prices and availability. Builds against a Storefront that answers 500 or never
+// answers must still succeed and fall back to the catalogue prices.
 //
 // The build runs in a temporary copy of the project (node_modules linked), so the main
 // `.next` is never touched. Everything is cleaned up at the end.
@@ -105,16 +105,24 @@ async function assertCatalogueFallback(base) {
   log(`failing Storefront: build ok, PDP falls back to ${first.id} at ${usd(first.price)}`);
 }
 
-/** Answers every request with HTTP 500, like a Storefront outage. */
-function startBrokenStorefront() {
+/** A Storefront outage: every request gets HTTP 500, or (`hang`) is accepted and never answered. */
+function startBrokenStorefront({ hang = false } = {}) {
   return new Promise((resolve) => {
     const server = createServer((_req, res) => {
+      if (hang) return;
       res.writeHead(500, { "content-type": "application/json" });
       res.end('{"errors":[{"message":"outage"}]}');
     });
     server.listen(0, "127.0.0.1", () => {
       const { port } = server.address();
-      resolve({ url: `http://127.0.0.1:${port}`, close: () => new Promise((r) => server.close(r)) });
+      resolve({
+        url: `http://127.0.0.1:${port}`,
+        close: () =>
+          new Promise((r) => {
+            server.close(r);
+            server.closeAllConnections();
+          }),
+      });
     });
   });
 }
@@ -154,6 +162,7 @@ let failed = false;
 try {
   await buildAndAssert(await startFakeStorefront(), assertPdp);
   await buildAndAssert(await startBrokenStorefront(), assertCatalogueFallback);
+  await buildAndAssert(await startBrokenStorefront({ hang: true }), assertCatalogueFallback);
   log("ok");
 } catch (err) {
   failed = true;

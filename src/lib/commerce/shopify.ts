@@ -30,7 +30,11 @@ export interface ShopifyConfig {
   token: string;
   version?: string;
   fetch?: typeof fetch;
+  /** Abort a Storefront request after this many milliseconds. Default 8000. */
+  timeoutMs?: number;
 }
+
+const DEFAULT_TIMEOUT_MS = 8000;
 
 // ---- GraphQL documents ---------------------------------------------------------------
 
@@ -275,6 +279,8 @@ export function createShopifyAdapter(config: ShopifyConfig): CommerceAdapter {
         "X-Shopify-Storefront-Access-Token": config.token,
       },
       body: JSON.stringify({ query, variables }),
+      // A hanging Storefront must fail like an outage, not stall a prerender or a cart action.
+      signal: AbortSignal.timeout(config.timeoutMs ?? DEFAULT_TIMEOUT_MS),
       ...(cache ? { cache } : {}),
     });
     if (!res.ok) throw new ShopifyError(`Shopify Storefront API responded ${res.status}`);

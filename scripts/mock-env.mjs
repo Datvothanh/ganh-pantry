@@ -13,4 +13,8 @@ const res = spawnSync(cmd, args, {
   shell: process.platform === "win32",
   env: { ...process.env, GANH_COMMERCE: "mock" },
 });
+if (res.error) {
+  console.error(res.error.message);
+  process.exit(1);
+}
 process.exit(res.status ?? 1);

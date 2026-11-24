@@ -21,7 +21,7 @@ npm run dev                  # http://localhost:3000
 | `npm run check` | Lint, typecheck, unit tests, then `npm run build:mock` (Turbopack, mock commerce). |
 | `npm run check:lane` | Same checks with a mock `next build --webpack`. Use this one in lanes and CI-like runs. |
 | `npm run build:mock` | `next build` with `GANH_COMMERCE=mock`, whatever the Shopify env says. |
-| `npm run check:shopify` | Builds and starts the site against a local fake Storefront API and asserts that a product page shows the Shopify price. |
+| `npm run check:shopify` | Builds and starts the site against a local fake Storefront API and asserts that a product page shows the Shopify price, then builds against a failing Storefront and asserts the catalogue fallback. |
 | `npm run e2e` | Playwright tests (`tests/e2e`). Needs a mock production build first (`npm run build:mock`, or `npm run check`); the global setup refuses a build rendered with real Shopify data. The config starts `next start` with `GANH_DEV_ROUTES=1` and `GANH_COMMERCE=mock`. Set `E2E_PORT` to change the port (default 3100). |
 | `npm run labels` | Renders jar labels to `public/labels/<handle>.png` and motifs to `public/motifs/`. |
 | `npm run composites` | Renders `public/products/<handle>.webp` (jar photo plus label) through the dev route `/dev/composite.html`. Uses `sharp`. |

@@ -7,12 +7,12 @@ import { createPortal } from "react-dom";
 import { useLenis } from "@/components/motion/SmoothScroll";
 import { useLocale } from "@/components/shell/LocaleProvider";
 import { productByHandle } from "@/content/products";
-import { site } from "@/content/site";
 import { formatMoney } from "@/lib/commerce/format";
 import { MAX_LINE_QUANTITY, type CartLine } from "@/lib/commerce/types";
 import { href } from "@/lib/i18n";
 import { isExternalCheckout } from "./checkout";
 import { cartCopy } from "./copy";
+import { StorePasswordNote } from "./StorePasswordNote";
 import { closeCart, removeLine, setLineQuantity, useCart } from "./store";
 import styles from "./Cart.module.css";
 
@@ -181,11 +181,7 @@ export function CartDrawer() {
                 <strong data-cart-subtotal>{cart ? formatMoney(cart.subtotal, locale) : ""}</strong>
               </p>
               <p className={styles.note}>{t.note}</p>
-              {!internal && (
-                <p className={styles.note} data-cart-store-password>
-                  {t.storePassword(site.demoStorePassword)}
-                </p>
-              )}
+              <StorePasswordNote checkoutUrl={checkoutUrl} locale={locale} className={styles.note} />
               {alert}
               {internal ? (
                 <Link href={href(locale, checkoutUrl)} className={styles.pill} data-cart-checkout onClick={closeCart}>

@@ -261,3 +261,17 @@ describe("shopify adapter", () => {
     expect(await adapterWith(mockFetch({ data: { cart: null } })).getCart("gone")).toBeNull();
   });
 });
+
+describe("Storefront request timeout", () => {
+  it("rejects a request that never answers once the timeout passes", async () => {
+    const hang = vi.fn(
+      (_url: string | URL | Request, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
+        }),
+    );
+    const adapter = createShopifyAdapter({ domain: "x.myshopify.com", token: "t", fetch: hang as typeof fetch, timeoutMs: 50 });
+    await expect(adapter.getProduct("x")).rejects.toThrow();
+    await expect(adapter.getCart("c")).rejects.toThrow();
+  }, 2000);
+});
