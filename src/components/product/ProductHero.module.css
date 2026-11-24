@@ -5,7 +5,25 @@
   --ph-meta-shift: 0px;
   --ph-jar-scale-from: 1;
   --ph-title-size: clamp(4rem, calc(2.9rem + 9vw), 999999px);
-  /* --ph-jar-w/-top/-rise/-rotate/-scale-to come from .page in ProductPage.module.css. */
+  --ph-title-lh: 0.98;
+  --ph-meta-font: clamp(1.45rem, calc(1rem + 1.05vw), 2.6rem);
+  /* --ph-jar-w/-top/-rise/-rotate/-scale-to/-stage-h come from .page in ProductPage.module.css. */
+  /*
+   * Title/jar column. The title starts where a two-line title would end 24px above the jar's
+   * lowest rest position (--ph-jar-top), whatever its line count, and the jar rests 24px under
+   * its last line, so one-line titles bring the jar up instead of leaving a gap above. The title
+   * never starts above the header bar (2 * --pad-y + the logo, at most 30% of the stage) + 16px,
+   * and its box is capped at the room above the lowest jar position (ProductHero scales it to fit).
+   */
+  --ph-line: calc(var(--ph-title-size) * var(--ph-title-lh));
+  --ph-head: min(var(--pad-y) * 2 + 80px, var(--ph-stage-h) * 0.3);
+  --ph-top-min: calc(var(--ph-head) + 16px);
+  --ph-jar-y: calc(var(--ph-stage-h) * var(--ph-jar-top));
+  --ph-title-top: max(
+    var(--ph-top-min),
+    calc(var(--ph-jar-y) - 24px - 2 * var(--ph-line))
+  );
+  --ph-title-max: calc(var(--ph-jar-y) - 24px - var(--ph-title-top));
 }
 
 .stage {
@@ -18,21 +36,27 @@
 
 /* ---- title ---- */
 
-.title {
+.column {
   position: absolute;
-  left: 50%;
-  top: var(--ph-title-rest-y, 44%);
+  left: 0;
+  right: 0;
+  top: var(--ph-title-top);
+}
+
+.title {
+  position: relative;
   z-index: 1;
   width: 95%;
-  margin: 0;
+  max-height: var(--ph-title-max);
+  margin: 0 auto;
   color: var(--c-red);
   font-size: calc(var(--ph-title-size) * var(--ph-title-fit, 1));
   font-weight: 400;
-  line-height: 0.98;
+  line-height: var(--ph-title-lh);
   letter-spacing: -0.015em;
   text-align: center;
   text-transform: uppercase;
-  transform: translate(-50%, calc(-50% + var(--ph) * var(--ph-title-fall)));
+  transform: translateY(calc(var(--ph) * var(--ph-title-fall)));
   will-change: transform;
 }
 
@@ -87,7 +111,7 @@
   margin: 0;
   color: var(--c-lacquer);
   font-family: var(--font-display), serif;
-  font-size: clamp(1.45rem, calc(1rem + 1.05vw), 2.6rem);
+  font-size: var(--ph-meta-font);
   line-height: 1.1;
   opacity: 0;
   transform: translateY(calc(var(--ph) * var(--ph-meta-shift)));
@@ -130,13 +154,14 @@
 /* ---- jar ---- */
 
 .jar {
-  position: absolute;
-  left: 50%;
-  top: calc(var(--ph-jar-top) * 100%);
+  position: relative;
   z-index: 2;
   width: var(--ph-jar-w);
   aspect-ratio: 630 / 1013;
-  transform: translateX(-50%) translateY(calc(var(--ph) * var(--ph-jar-rise)))
+  margin: 24px auto 0;
+  transform: translateY(
+      calc(var(--ph) * (var(--ph-jar-rise) + var(--ph-jar-drop, 0px)))
+    )
     rotate(calc(var(--ph) * var(--ph-jar-rotate)))
     scale(
       calc(
@@ -196,21 +221,27 @@
 
 /*
  * The stage is a fixed-height box; the space the jar and meta row need below it is part of the
- * hero, so the intro starts in the right place before any script runs. The base item holds the
- * jar clearance (--hero-clear, see ProductPage.module.css; ProductHero swaps in its measured value).
- * The probe is a half-size, half-width copy of the title (so it wraps like the real one and is half
- * as tall) pushed to where the meta row ends: its bottom edge is the meta end pose + gap, i.e.
- * jar centre + half the title + META_GAP + meta height + CLEAR_GAP, the other term of layout().
- * It sets the title font, and ignores --ph-title-fit (set only once JS runs) so it is the same box
- * with and without JS; instead it is capped like layout() caps the title: the space between the
- * header (2 * --pad-y + the logo, at most 30% of the stage) + TITLE_GAP_TOP and the jar - TITLE_GAP_JAR.
+ * hero, so the intro starts in the right place before any script runs. The grid's items overlap
+ * and the tallest wins. The base item holds --ph-intro-min and the jar clearance (--hero-clear,
+ * see ProductPage.module.css; ProductHero swaps in its measured value). With the scrub the jar's
+ * end pose does not depend on the title (a shorter title lifts the rest pose and ProductHero adds
+ * the difference to the rise as --ph-jar-drop), so that is a plain formula. The other items are
+ * invisible copies of the title that wrap like the real one (same word/char boxes, capped like the
+ * title box), so the parts that depend on its height are the same with and without JS:
+ * - probeMeta (wide screens with the scrub) is a half-size, half-width copy (half as tall) pushed
+ *   to where the meta row ends: jar centre + half the title + META_GAP + meta height (two lines)
+ *   + CLEAR_GAP, the other term of layout().
+ * - probeJar (reduced motion, no scrub) is a full-size copy whose bottom is the jar's rest bottom
+ *   + CLEAR_GAP: title top + title box + 24px + jar height.
+ * They ignore --ph-title-fit (set only once JS runs), so they are the same box with and without JS.
  */
 .reserve {
   display: grid;
 }
 
 .reserveBase,
-.probe {
+.probeJar,
+.probeMeta {
   grid-area: 1 / 1;
 }
 
@@ -218,26 +249,16 @@
   height: max(var(--ph-intro-min), var(--hero-clear));
 }
 
-.probe {
+.probeJar,
+.probeMeta {
   align-self: start;
-  width: 47.5%;
-  margin: calc(
-      var(--ph-stage-h) * var(--ph-jar-top) + var(--ph-jar-h) / 2 +
-        var(--ph-jar-rise) - var(--ph-stage-h) + 116px + 2.2 *
-        clamp(1.45rem, calc(1rem + 1.05vw), 2.6rem)
-    )
-    auto 0;
-  max-height: calc(
-    (
-        var(--ph-stage-h) * var(--ph-jar-top) - 24px - 16px -
-          min(var(--pad-y) * 2 + 80px, var(--ph-stage-h) * 0.3)
-      ) / 2
-  );
+  width: 95%;
+  max-height: var(--ph-title-max);
   overflow: hidden;
   font-family: var(--font-display), serif;
-  font-size: calc(var(--ph-title-size) / 2);
+  font-size: var(--ph-title-size);
   font-weight: 400;
-  line-height: 0.98;
+  line-height: var(--ph-title-lh);
   letter-spacing: -0.015em;
   text-align: center;
   text-transform: uppercase;
@@ -245,28 +266,52 @@
   pointer-events: none;
 }
 
+.probeJar {
+  display: none;
+  margin: calc(
+      var(--ph-title-top) + 24px + var(--ph-jar-h) - var(--ph-stage-h) + 56px
+    )
+    auto 0;
+}
+
+.probeMeta {
+  width: 47.5%;
+  max-height: calc(var(--ph-title-max) / 2);
+  margin: calc(
+      var(--ph-jar-y) + var(--ph-jar-h) / 2 + var(--ph-jar-rise) -
+        var(--ph-stage-h) + 116px + 2.2 * var(--ph-meta-font)
+    )
+    auto 0;
+  font-size: calc(var(--ph-title-size) / 2);
+}
+
 .probeChar {
   display: inline-block;
 }
 
 @media (max-width: 1024px), (prefers-reduced-motion: reduce) {
-  .probe {
+  .probeMeta {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .probeJar {
+    display: block;
   }
 }
 
 @media (max-width: 1024px) {
   .hero {
     --ph-title-size: clamp(3rem, calc(1rem + 11vw), 999999px);
-  }
-
-  .title {
-    line-height: 1.02;
+    --ph-title-lh: 1.02;
+    /* The meta row (one line) sits between the header and the title. */
+    --ph-top-min: calc(var(--ph-head) + 32px + 1.1 * var(--ph-meta-font));
   }
 
   .meta {
     bottom: auto;
-    top: 30%;
+    top: calc(var(--ph-title-top) - 16px - 1.1 * var(--ph-meta-font));
     justify-content: center;
     padding-inline: var(--pad);
     text-align: center;

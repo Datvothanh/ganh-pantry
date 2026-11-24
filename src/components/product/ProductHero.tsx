@@ -20,9 +20,8 @@ export const HERO_READY_EVENT = "ganh:hero-ready";
 
 /** Scroll distance (fraction of the viewport height) that scrubs `--ph` from 0 to 1. */
 const SCRUB_VH = 0.4;
-/** Gap between the header and the title, and between the title and the jar (px). */
+/** Gap between the meta row and the title on narrow screens (px; the title/jar layout is CSS). */
 const TITLE_GAP_TOP = 16;
-const TITLE_GAP_JAR = 24;
 /** Space between the title and the meta row once the scrub ends (px). */
 const META_GAP = 60;
 /** Minimum space between the lowest hero element and the content below (px). */
@@ -53,6 +52,7 @@ export function ProductHero({
 }: Props) {
   const root = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  const column = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const meta = useRef<HTMLDivElement>(null);
   const jarRef = useRef<HTMLDivElement>(null);
@@ -157,36 +157,38 @@ export function ProductHero({
   // Title fit + scroll scrub positions, measured from the layout.
   useEffect(() => {
     const st = stage.current;
+    const col = column.current;
     const t = titleRef.current;
     const m = meta.current;
     const j = jarRef.current;
-    if (!st || !t || !m || !j) return;
+    if (!st || !col || !t || !m || !j) return;
 
     const layout = () => {
       m.style.top = "";
-      st.style.removeProperty("--ph-title-rest-y");
       root.current?.style.removeProperty("--ph-title-fit");
       const narrow = window.matchMedia("(max-width: 1024px)").matches;
-      const header = document.querySelector("[data-site-header]");
-      const headerBottom = Math.min(
-        header?.getBoundingClientRect().bottom ?? 0,
-        st.clientHeight * 0.3,
-      );
-      const top =
-        headerBottom +
-        TITLE_GAP_TOP +
-        (narrow ? m.offsetHeight + TITLE_GAP_TOP : 0);
-      const jarTop = j.offsetTop;
-      const bottom = jarTop - TITLE_GAP_JAR;
-      if (t.offsetHeight > bottom - top)
+      // CSS places the title (same top for any line count) and the jar right under it; the title
+      // box is capped at the room above the jar's lowest rest position, so scale it down to fit.
+      t.style.maxHeight = "none";
+      const natural = t.offsetHeight;
+      t.style.maxHeight = "";
+      const room = t.offsetHeight;
+      if (natural > room + 1)
         root.current?.style.setProperty(
           "--ph-title-fit",
-          `${Math.max(0.3, (bottom - top) / t.offsetHeight)}`,
+          `${Math.max(0.3, room / natural)}`,
         );
       const s = t.offsetHeight;
-      // The title rests right above the jar whatever its line count (spare room goes above it).
-      const restY = Math.max(top + s / 2, bottom - s / 2);
-      st.style.setProperty("--ph-title-rest-y", `${restY}px`);
+      const titleTop = col.offsetTop + t.offsetTop;
+      const restY = titleTop + s / 2;
+      const jarTop = col.offsetTop + j.offsetTop;
+      // A title shorter than its box lifts the jar's rest pose; the scrub adds that back so the
+      // end pose stays where it is for any title (clear of the header, same space below).
+      const drop = Math.max(
+        0,
+        (parseFloat(getComputedStyle(t).maxHeight) || s) - s,
+      );
+      st.style.setProperty("--ph-jar-drop", `${drop}px`);
       const cs = getComputedStyle(st);
       const riseRaw = cs.getPropertyValue("--ph-jar-rise").trim();
       const rise = riseRaw.endsWith("vh")
@@ -194,11 +196,11 @@ export function ProductHero({
         : parseFloat(riseRaw) || 0;
       const jw = j.offsetWidth;
       const jh = j.offsetHeight;
-      const jarCentre = jarTop + jh / 2 + rise;
+      const jarCentre = jarTop + jh / 2 + rise + drop;
       let metaShift = 0;
       if (narrow) {
         st.style.setProperty("--ph-title-fall", "0px");
-        m.style.top = `${restY - s / 2 - TITLE_GAP_TOP - m.offsetHeight}px`;
+        m.style.top = `${titleTop - TITLE_GAP_TOP - m.offsetHeight}px`;
       } else {
         metaShift = jarCentre + s / 2 + META_GAP - m.offsetTop;
         st.style.setProperty("--ph-title-fall", `${jarCentre - restY}px`);
@@ -270,6 +272,23 @@ export function ProductHero({
 
   let charIndex = 0;
   const words = title.normalize("NFC").split(/\s+/).filter(Boolean);
+  // Same word/char boxes as the title so a probe wraps exactly like it.
+  const probe = (className: string) => (
+    <div className={className}>
+      {words.map((word, wi) => (
+        <span key={wi}>
+          {wi > 0 ? " " : null}
+          <span className={styles.word}>
+            {Array.from(word).map((ch, ci) => (
+              <span key={ci} className={styles.probeChar}>
+                {ch}
+              </span>
+            ))}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
 
   return (
     <section ref={root} className={styles.hero} data-product-hero="">
@@ -278,30 +297,59 @@ export function ProductHero({
         className={styles.stage}
         data-play={introDone ? "" : undefined}
       >
-        <h1
-          ref={titleRef}
-          className={styles.title}
-          aria-label={title}
-          lang="vi"
-        >
-          {words.map((word, wi) => (
-            <span key={wi}>
-              {wi > 0 ? " " : null}
-              <span className={styles.word} aria-hidden="true">
-                {Array.from(word).map((ch, ci) => (
-                  <span
-                    key={ci}
-                    className={styles.char}
-                    data-char=""
-                    style={{ "--i": charIndex++ } as CSSProperties}
-                  >
-                    {ch}
-                  </span>
-                ))}
+        <div ref={column} className={styles.column}>
+          <h1
+            ref={titleRef}
+            className={styles.title}
+            aria-label={title}
+            lang="vi"
+          >
+            {words.map((word, wi) => (
+              <span key={wi}>
+                {wi > 0 ? " " : null}
+                <span className={styles.word} aria-hidden="true">
+                  {Array.from(word).map((ch, ci) => (
+                    <span
+                      key={ci}
+                      className={styles.char}
+                      data-char=""
+                      style={{ "--i": charIndex++ } as CSSProperties}
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </span>
               </span>
-            </span>
-          ))}
-        </h1>
+            ))}
+          </h1>
+          <div
+            ref={jarRef}
+            className={styles.jar}
+            data-jar-target=""
+            data-handle={handle}
+          >
+            <div className={styles.jarInner} data-jar-rise="">
+              {/* eslint-disable-next-line @next/next/no-img-element -- cut-out jar photo under a WebGL label canvas */}
+              <img
+                className={styles.jarImg}
+                src={jar}
+                alt={jarAlt}
+                width={630}
+                height={1013}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                draggable={false}
+              />
+              <canvas
+                ref={canvas}
+                className={styles.jarLabel}
+                aria-hidden="true"
+                data-jar-canvas=""
+              />
+            </div>
+          </div>
+        </div>
         <div ref={meta} className={styles.meta}>
           <Link
             href={categoryHref}
@@ -315,51 +363,11 @@ export function ProductHero({
             {madeIn[1]}
           </p>
         </div>
-        <div
-          ref={jarRef}
-          className={styles.jar}
-          data-jar-target=""
-          data-handle={handle}
-        >
-          <div className={styles.jarInner} data-jar-rise="">
-            {/* eslint-disable-next-line @next/next/no-img-element -- cut-out jar photo under a WebGL label canvas */}
-            <img
-              className={styles.jarImg}
-              src={jar}
-              alt={jarAlt}
-              width={630}
-              height={1013}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              draggable={false}
-            />
-            <canvas
-              ref={canvas}
-              className={styles.jarLabel}
-              aria-hidden="true"
-              data-jar-canvas=""
-            />
-          </div>
-        </div>
       </div>
-      <div className={styles.reserve} aria-hidden="true">
+      <div className={styles.reserve} aria-hidden="true" lang="vi">
         <div className={styles.reserveBase} />
-        {/* Same word/char boxes as the title so it wraps exactly like it. */}
-        <div className={styles.probe} data-hero-probe="" lang="vi">
-          {words.map((word, wi) => (
-            <span key={wi}>
-              {wi > 0 ? " " : null}
-              <span className={styles.word}>
-                {Array.from(word).map((ch, ci) => (
-                  <span key={ci} className={styles.probeChar}>
-                    {ch}
-                  </span>
-                ))}
-              </span>
-            </span>
-          ))}
-        </div>
+        {probe(styles.probeJar)}
+        {probe(styles.probeMeta)}
       </div>
     </section>
   );

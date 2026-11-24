@@ -107,7 +107,7 @@ export function Header({ locale }: { locale: Locale }) {
             inert={cartOpen}
             onClick={open}
           >
-            <span className={styles.menuPill}>{t.menu.open}</span>
+            <span className={styles.menuPill} data-menu-pill>{t.menu.open}</span>
             <span className={styles.round} aria-hidden="true">
               <span className={styles.diamond} data-menu-diamond />
             </span>

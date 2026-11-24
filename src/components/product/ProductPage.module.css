@@ -13,9 +13,16 @@
   /* Minimum gap between the stage and the intro text. */
   --ph-intro-min: calc(15vh + clamp(60px, 7vw, 140px));
   /*
+   * Empty space under the text columns (intro, spec row, other-products cards) at least as tall as
+   * the sticky buy bar, so once a column has scrolled fully into view the bar sits over that space,
+   * not over its last lines.
+   */
+  --sticky-bar-space: max(112px, 5vw);
+  /*
    * Space the hero jar needs below the stage, reserved in CSS with the same formula as
-   * ProductHero's layout() (end pose after the scrub: jar centre + rotated, scaled half height;
-   * 56px gap). ProductHero then overrides it inline with the measured value, a few px off at most.
+   * ProductHero's layout() (end pose after the scrub, the same for any title: jar centre +
+   * rotated, scaled half height; 56px gap). ProductHero then overrides it inline with the
+   * measured value, a few px off at most.
    */
   --hero-clear: max(
     0px,
@@ -40,7 +47,7 @@
   max-width: min(1200px, calc(100% / 12 * 10));
   margin-inline: auto;
   /* The space below the hero (jar clearance, minimum --ph-intro-min) is part of the hero itself. */
-  padding: 0 var(--pad) 0;
+  padding: 0 var(--pad) var(--sticky-bar-space);
   text-align: center;
 }
 
@@ -76,8 +83,21 @@
 
 /* ---- info row ---- */
 
+/* The intro's bottom padding is the gap above the row; the bar space under it is the gap below. */
 .meta {
-  padding: clamp(50px, 6vw, 110px) var(--pad) 0;
+  padding: 0 var(--pad) var(--sticky-bar-space);
+}
+
+.page [data-other-track] {
+  padding-bottom: var(--sticky-bar-space);
+}
+
+/* Keep the section's own bottom space: the track's bar space is part of it. */
+.page [data-other-products] {
+  padding-bottom: max(
+    0px,
+    calc(clamp(90px, 10vw, 200px) - var(--sticky-bar-space))
+  );
 }
 
 .metaInner {
@@ -160,16 +180,10 @@
   }
 }
 
-/* No scrub: the jar stays in its rest pose. */
+/* No scrub: the jar's rest pose depends on the title, reserved by ProductHero's .probeJar. */
 @media (prefers-reduced-motion: reduce) {
   .page {
-    --hero-clear: max(
-      0px,
-      calc(
-        var(--ph-stage-h) * var(--ph-jar-top) + var(--ph-jar-h) -
-          var(--ph-stage-h) + 56px
-      )
-    );
+    --hero-clear: 0px;
   }
 }
 
@@ -191,9 +205,6 @@
     font-size: 0.97vw;
   }
 
-  .meta {
-    padding-top: 5.73vw;
-  }
 
   .col {
     padding-top: 1.56vw;

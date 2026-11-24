@@ -60,9 +60,10 @@
   margin-left: -10px;
 }
 
+/* Small labels use a lighter flame: plain flame is 3.4:1 on lacquer, this tone is ~5:1. */
 .accent,
 .label {
-  color: var(--c-flame);
+  color: #ff7a4d;
   font-weight: 600;
   font-size: 13px;
   letter-spacing: 0.04em;

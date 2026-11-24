@@ -130,7 +130,10 @@ function Media({ src, alt, ratio }: { src: string; alt: string; ratio?: string }
 function Weights({ list, t, center }: { list: Product[]; t: PantryStrings; center?: boolean }) {
   const weights = [...new Set(list.flatMap((p) => p.variants.map((v) => v.weight)))];
   return (
-    <div className={center ? styles.weightsCenter : undefined} data-pantry-weights="">
+    <div
+      className={`${styles.weightsBlock}${center ? ` ${styles.weightsCenter}` : ""}`}
+      data-pantry-weights=""
+    >
       <p className={styles.weightsLabel}>{t.weights}</p>
       <ul className={styles.weights}>
         {weights.map((w) => (

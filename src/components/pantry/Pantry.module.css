@@ -281,6 +281,11 @@
   white-space: nowrap;
 }
 
+/* Room for the fixed pill bar below each weights block, so the bar can stay up while it passes. */
+.weightsBlock {
+  margin-bottom: calc(clamp(16px, 2.8vw, 40px) + 80px);
+}
+
 .weightsCenter {
   text-align: center;
 }
@@ -633,7 +638,6 @@
   }
 
   .card .cardJar {
-    bottom: 27%;
     width: 38%;
   }
 

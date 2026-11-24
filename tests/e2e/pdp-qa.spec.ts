@@ -210,3 +210,140 @@ for (const size of [
     });
   }
 }
+
+// ---- Q2-1: title starts at the same place for 1- and 2-line titles; jar right under it ----
+
+for (const size of [
+  { width: 1440, height: 900 },
+  { width: 2560, height: 1440 },
+  { width: 390, height: 844 },
+]) {
+  test(`Q2-1 title top is the same for 1- and 2-line titles, jar under its last line at ${size.width}x${size.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    const tops: Record<string, number> = {};
+    for (const handle of ["mut-quat", "ca-phao", "mat-ong-ca-phe"]) {
+      await page.goto(`/products/${handle}`);
+      await settle(page);
+      const g = await page.evaluate(() => {
+        const h1 = document.querySelector("h1")!;
+        // Word boxes are laid out lines (the letters inside animate, the words do not).
+        const words = Array.from(h1.querySelectorAll<HTMLElement>("[data-char]")).map(
+          (c) => c.parentElement!.getBoundingClientRect(),
+        );
+        let headerBottom = 0;
+        for (const e of Array.from(
+          document.querySelectorAll("[data-site-header] a, [data-site-header] button, [data-site-header] svg, [data-site-header] img"),
+        )) {
+          const r = e.getBoundingClientRect();
+          if (r.height && r.top < 200 && getComputedStyle(e).visibility !== "hidden") headerBottom = Math.max(headerBottom, r.bottom);
+        }
+        return {
+          top: Math.min(...words.map((r) => r.top)),
+          lastLine: Math.max(...words.map((r) => r.bottom)),
+          lines: new Set(words.map((r) => Math.round(r.top))).size,
+          jarTop: document.querySelector("[data-jar-target]")!.getBoundingClientRect().top,
+          headerBottom,
+        };
+      });
+      tops[`${handle} (${g.lines} lines)`] = Math.round(g.top);
+      const gap = g.jarTop - g.lastLine;
+      expect(gap, `${handle}: jar top - title last line`).toBeGreaterThanOrEqual(0);
+      expect(gap, `${handle}: jar top - title last line`).toBeLessThanOrEqual(40);
+      if (size.width === 1440)
+        expect(g.top - g.headerBottom, `${handle}: empty band under the header`).toBeLessThanOrEqual(260);
+    }
+    const values = Object.values(tops);
+    expect(Math.max(...values) - Math.min(...values), JSON.stringify(tops)).toBeLessThanOrEqual(40);
+  });
+}
+
+// ---- Q2-4: at rest positions the sticky bar covers no text ----
+
+// A rest position: a column scrolled up until its box (with its bottom padding) ends at the
+// viewport bottom, i.e. the reader has reached its end. The bar shows there and must sit over
+// that padding, not over the column's text.
+for (const size of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`Q2-4 sticky bar never covers description, spec or card captions at rest at ${size.width}x${size.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await page.goto("/products/mut-quat");
+    await settle(page);
+    const columns = {
+      description: "section:has(> [data-reveal])",
+      spec: "section:has([data-weight])",
+      "other-products track": "[data-other-track]",
+    };
+    for (const [name, sel] of Object.entries(columns)) {
+      const bottom = await page
+        .locator(sel)
+        .first()
+        .evaluate((el) => el.getBoundingClientRect().bottom + scrollY);
+      const y = Math.round(bottom - size.height) - 2;
+      // The bar only shows past the first half screen (QP-1); nothing to cover before that.
+      if (y <= size.height / 2 + 8) continue;
+      await scrollTo(page, y);
+      await expect(page.locator("[data-sticky-buy]"), `${name} rest y=${y}`).toHaveAttribute("data-visible", "");
+      // Let the slide-in transition finish.
+      await page.waitForTimeout(700);
+      const covered = await page.locator(sel).first().evaluate((col) => {
+        const bar = document.querySelector("[data-sticky-buy] > div")!.getBoundingClientRect();
+        const hits: string[] = [];
+        const walker = document.createTreeWalker(col, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          if (!n.textContent?.trim()) continue;
+          const range = document.createRange();
+          range.selectNodeContents(n);
+          for (const r of Array.from(range.getClientRects())) {
+            if (r.width && r.bottom > bar.top + 1 && r.top < bar.bottom - 1 && r.right > bar.left && r.left < bar.right)
+              hits.push(`${n.textContent.trim().slice(0, 24)}@${Math.round(r.top)}`);
+          }
+        }
+        return hits;
+      });
+      expect(covered, `${name}: text under the bar (bar top ${size.height})`).toEqual([]);
+    }
+  });
+}
+
+// ---- Q2-5: sticky bar price uses the drawer's money style ----
+
+test("Q2-5 sticky bar price has the drawer subtotal's font family", async ({ page }) => {
+  await page.goto("/products/mut-quat");
+  await settle(page);
+  await page.locator("[data-buy-block] [data-add-to-cart]").click();
+  const subtotal = page.locator("[data-cart-drawer] [data-cart-subtotal]");
+  await expect(subtotal).not.toHaveText("");
+  const family = (el: Element) => getComputedStyle(el).fontFamily;
+  expect(await page.locator("[data-sticky-price]").evaluate(family)).toBe(await subtotal.evaluate(family));
+});
+
+// ---- Q2-6: photo-row images never upscaled at 2560 ----
+
+test("Q2-6 photo-row images render no wider than their source at 2560x1440", async ({ page }) => {
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  await page.goto("/products/mut-quat");
+  await settle(page);
+  const row = page.locator("[data-photo-row]");
+  await row.evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 100));
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll<HTMLImageElement>("[data-photo-slide] img")).every(
+          (i) => i.complete && i.naturalWidth > 0,
+        ),
+      ),
+    )
+    .toBe(true);
+  const over = await page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLImageElement>("[data-photo-slide] img"))
+      .filter((i) => i.offsetWidth > i.naturalWidth + 0.5 || i.offsetHeight > i.naturalHeight + 0.5)
+      .map((i) => `${i.offsetWidth}x${i.offsetHeight} > ${i.naturalWidth}x${i.naturalHeight}`),
+  );
+  expect(over).toEqual([]);
+});

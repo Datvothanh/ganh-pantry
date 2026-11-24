@@ -161,17 +161,22 @@ for (const size of [
   { width: 1920, height: 1080 },
   { width: 390, height: 844 },
 ]) {
-  test(`the pill bar never covers a weights block at ${size.width}px`, async ({ page }) => {
+  // Q2-7: the bar no longer steps aside while a block passes; each block keeps room below it,
+  // so once scrolled into that room the block sits fully above the shown bar.
+  test(`a weights block scrolled into view rests clear of the pill bar at ${size.width}px`, async ({ page }) => {
     await page.setViewportSize(size);
     await page.goto("/pantry");
     await hydrated(page);
     await expect(page.locator("[data-pantry-weights]")).toHaveCount(4);
-    const max = await page.evaluate(
-      () => document.documentElement.scrollHeight - window.innerHeight,
-    );
-    for (let y = 0; y < max; y += 100) {
-      await page.evaluate((top) => window.scrollTo(0, top), y);
+    for (let i = 0; i < 4; i++) {
+      await page.evaluate((k) => {
+        const w = document.querySelectorAll("[data-pantry-weights]")[k];
+        const r = w.getBoundingClientRect();
+        const room = parseFloat(getComputedStyle(w).marginBottom);
+        window.scrollTo(0, r.bottom + room + window.scrollY - window.innerHeight);
+      }, i);
       await twoFrames(page);
+      await expect(page.locator("[data-pantry-nav][data-shown]")).toHaveCount(1);
       const hit = await page.evaluate(() => {
         const nav = document.querySelector<HTMLElement>("[data-pantry-nav]")!;
         if (!nav.hasAttribute("data-shown")) return null;
@@ -184,7 +189,7 @@ for (const size of [
         }
         return null;
       });
-      expect(hit, `scrollY ${y}`).toBeNull();
+      expect(hit, `weights block ${i}`).toBeNull();
     }
   });
 }
@@ -356,4 +361,40 @@ test("quick-add shows the weight and price and names them", async ({ page }) => 
     expect(label, path).toContain("314 g");
     expect(label, path).toMatch(/\b9\b/);
   }
+});
+
+// ---------- QA ledger Q2-7 ----------
+
+test("at 390px the pill bar stays up through the four sections and hides at the spec table", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/pantry");
+  await hydrated(page);
+  const { start, end } = await page.evaluate(() => {
+    const first = document.querySelector("[data-pantry-section]")!;
+    const table = document.querySelector("[data-pantry-end]")!;
+    return {
+      start: Math.ceil(first.getBoundingClientRect().top + window.scrollY),
+      end: Math.floor(table.getBoundingClientRect().top + window.scrollY - window.innerHeight),
+    };
+  });
+  const hidden: number[] = [];
+  for (let y = start; y < end; y += 100) {
+    await page.evaluate((top) => window.scrollTo(0, top), y);
+    await twoFrames(page);
+    const state = await page.evaluate(() => ({
+      shown: document.querySelector("[data-pantry-nav]")!.hasAttribute("data-shown"),
+      // The spec table may move up as lazy content settles; only count positions before it.
+      before:
+        document.querySelector("[data-pantry-end]")!.getBoundingClientRect().top > window.innerHeight,
+    }));
+    if (state.before && !state.shown) hidden.push(y);
+  }
+  expect(hidden, "scroll positions where the bar was hidden").toEqual([]);
+  await page.evaluate(() => {
+    const table = document.querySelector("[data-pantry-end]")!;
+    window.scrollTo(0, table.getBoundingClientRect().top + window.scrollY - window.innerHeight + 100);
+  });
+  await expect(page.locator("[data-pantry-nav][data-shown]")).toHaveCount(0);
 });

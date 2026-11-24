@@ -175,3 +175,92 @@ for (const path of ["/products/mut-gung", "/pantry"]) {
     });
   }
 }
+
+// ---------- QA ledger Q2-2, Q2-12 ----------
+
+/** Q2-2: on mobile two-column grids the jar image ends above the card's name and sub line. */
+for (const { width, height } of [
+  { width: 360, height: 740 },
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
+]) {
+  for (const prefix of ["", "/vi"]) {
+    test(`pantry jar images stay above the name and sub at ${width}px (${prefix || "/en"})`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto(prefix + "/pantry");
+      await page.mouse.move(1, 1);
+      const cards = page.locator("[data-pantry-grid] [data-product-card]");
+      await expect(cards).toHaveCount(8);
+      // Images are lazy: bring each card into view and wait until its jar has really loaded,
+      // so no unloaded 0x0 box passes trivially.
+      for (let i = 0; i < 8; i++) {
+        const img = cards.nth(i).locator("img");
+        await img.scrollIntoViewIfNeeded();
+        await expect
+          .poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0))
+          .toBe(true);
+      }
+      await page.mouse.move(1, 1);
+      const boxes = await cards.evaluateAll((els) =>
+        els.map((el) => {
+          const img = el.querySelector("img")!.getBoundingClientRect();
+          const link = el.querySelector("a")!;
+          const name = link.querySelector("[lang='vi']")!.getBoundingClientRect();
+          const sub = link.lastElementChild!.getBoundingClientRect();
+          return {
+            handle: el.getAttribute("data-handle"),
+            imgHeight: img.height,
+            imgBottom: img.bottom,
+            imgLeft: img.left,
+            imgRight: img.right,
+            nameTop: name.top,
+            subTop: sub.top,
+          };
+        }),
+      );
+      for (const b of boxes) {
+        expect(b.imgHeight, JSON.stringify(b)).toBeGreaterThan(40);
+        expect(b.imgBottom, JSON.stringify(b)).toBeLessThanOrEqual(Math.min(b.nameTop, b.subTop) + 0.5);
+      }
+    });
+  }
+}
+
+/** Q2-12: the quick-add hit area is at least 44x44, also while it is hidden or scaling in. */
+for (const path of ["/pantry", "/products/mut-gung"]) {
+  for (const { width, height } of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    test(`quick-add hit area is at least 44px on ${path} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto(path);
+      await page.mouse.move(1, 1);
+      const cards = cardsOn(page, path);
+      const n = await cards.count();
+      expect(n).toBeGreaterThan(0);
+      for (let i = 0; i < n; i++) {
+        const button = cards.nth(i).locator("button[data-quick-add]");
+        await button.evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" }));
+        await page.waitForTimeout(150);
+        const misses = await button.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          return [
+            [cx - 21, cy],
+            [cx + 21, cy],
+            [cx, cy - 21],
+            [cx, cy + 21],
+          ]
+            .filter(([x, y]) => {
+              const hit = document.elementFromPoint(x, y);
+              return !hit || !el.contains(hit);
+            })
+            .map(([x, y]) => `${Math.round(x)},${Math.round(y)}`);
+        });
+        expect(misses, `card ${i}`).toEqual([]);
+      }
+    });
+  }
+}

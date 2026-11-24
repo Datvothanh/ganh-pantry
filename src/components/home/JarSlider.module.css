@@ -56,24 +56,26 @@
 
 /* The whole ring sits inside the hill, clear of the prompt and the footer strip.
    --badge-cy: ring centre and --badge-r: outer glyph radius, both in hill viewBox units
-   (1400 x 600); the badge box is 1000 units with the glyphs ending ~460 from its centre. */
+   (1400 x 600); the badge box is 1000 units with the glyphs ending ~460 from its centre.
+   Radii leave >= 8px of lacquer around every glyph at any rotation; the ring follows the
+   hill's parallax exactly (no extra offset of its own) so the margin holds while it moves. */
 .badge {
   --badge-cy: 274;
-  --badge-r: 185;
+  --badge-r: 178;
   position: absolute;
   left: 50%;
   top: calc(var(--badge-cy) / 600 * 100%);
   width: calc(var(--badge-r) * 1000 / 460 / 1400 * 100%);
   aspect-ratio: 1;
   opacity: var(--jar-intro);
-  transform: translate3d(calc(-50% + var(--jar-parallax-x) * -4px), calc(-50% + (1 - var(--jar-intro)) * 12px + var(--jar-parallax-y) * -3px), 0)
+  transform: translate3d(-50%, calc(-50% + (1 - var(--jar-intro)) * 12px), 0)
     rotate(calc(var(--jar-circle-rotation) + (1 - var(--jar-intro)) * -18deg));
 }
 
 @media (max-width: 1280px) {
   .badge {
     --badge-cy: 256;
-    --badge-r: 170;
+    --badge-r: 162;
   }
 }
 
@@ -180,8 +182,8 @@
 
 @media (max-width: 1024px) {
   .badge {
-    --badge-cy: 238;
-    --badge-r: 154;
+    --badge-cy: 241;
+    --badge-r: 142;
   }
   .stage {
     --jar-marquee-top: 45%;
@@ -197,7 +199,7 @@
   }
   .badge {
     --badge-cy: 288;
-    --badge-r: 197;
+    --badge-r: 185;
   }
 }
 
@@ -210,8 +212,8 @@
     width: 160vw;
   }
   .badge {
-    --badge-cy: 262;
-    --badge-r: 175;
+    --badge-cy: 266;
+    --badge-r: 158;
   }
 }
 

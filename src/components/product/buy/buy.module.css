@@ -61,8 +61,9 @@
 
 /* ---- buy block ---- */
 
+/* The space above is the spec row's bottom padding (room for the sticky bar, ProductPage.module.css). */
 .block {
-  padding: clamp(40px, 4.5vw, 80px) var(--pad) 0;
+  padding: 0 var(--pad);
 }
 
 .blockInner {
@@ -210,10 +211,14 @@
   opacity: 0.7;
 }
 
+/* Same money face as the buy block and the cart drawer: display serif. */
 .barPrice {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--font-display), serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 1024px) {
@@ -251,10 +256,6 @@
     width: 3.02vw;
     height: 3.02vw;
     font-size: 0.625vw;
-  }
-
-  .block {
-    padding-top: 4.17vw;
   }
 
   .blockInner {
@@ -313,6 +314,6 @@
   }
 
   .barPrice {
-    font-size: 0.94vw;
+    font-size: 1.25vw;
   }
 }

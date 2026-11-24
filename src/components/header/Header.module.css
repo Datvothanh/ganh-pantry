@@ -47,8 +47,10 @@
   color: var(--c-flame);
 }
 
+/* Solid fill so MENU stays readable over photos and jars (maroon on dark surfaces). */
 .header[data-tone="dark"] .menuPill {
   color: var(--c-cream);
+  background: var(--c-lacquer);
 }
 
 .header[data-tone="dark"] .round {
@@ -135,7 +137,7 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: inherit;
-  background: transparent;
+  background: var(--c-cream);
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
@@ -178,11 +180,15 @@
   }
 }
 
+/* Small phones: keep >= 8px between the logo and the MENU button (button box is 3px wider). */
 @media (max-width: 640px) {
+  .header {
+    column-gap: 11px;
+  }
   .logo {
-    font-size: 10px;
+    font-size: 9px;
   }
   .menuPill {
-    padding: 0 14px;
+    padding: 0 10px;
   }
 }

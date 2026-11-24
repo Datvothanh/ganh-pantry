@@ -1,9 +1,11 @@
 /*
  * Row height is fixed; each card is --ar row heights wide (cycled in PhotoRow.tsx), so about three
- * photos of different widths share the viewport and none is shown wider than its 1024px source.
+ * photos of different widths share the viewport and none is shown wider than its 1024px source:
+ * the widest image box is 1.28 row heights + 2 * 16% bleed = 1.69 row heights, so the row height
+ * stops at 600px (1014px wide images) on very wide screens.
  */
 .row {
-  --photo-h: 30vw;
+  --photo-h: min(30vw, 600px);
   --photo-gap: 40px;
   --photo-bleed: 16%;
   margin-top: clamp(80px, 9vw, 180px);

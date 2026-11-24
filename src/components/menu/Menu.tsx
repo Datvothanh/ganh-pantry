@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { LangSwitch } from "@/components/header/LangSwitch";
@@ -10,6 +10,8 @@ import { categories, products } from "@/content/products";
 import { site } from "@/content/site";
 import { href, type Locale } from "@/lib/i18n";
 import styles from "./Menu.module.css";
+
+const THUMB = { width: 30, height: 48 } as const;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -29,6 +31,18 @@ export function Menu({ open, onClose, locale, returnFocus }: MenuProps) {
   // `shown` keeps the overlay mounted while the closing curtain plays.
   const [shown, setShown] = useState(open);
   if (open && !shown) setShown(true);
+
+  // Warm the cache for every jar thumbnail on mount, so they paint as soon as the menu opens.
+  useEffect(() => {
+    products.forEach((p) => {
+      const { props } = getImageProps({ src: p.jar, alt: "", ...THUMB });
+      const img = new window.Image();
+      img.decoding = "async";
+      if (props.sizes) img.sizes = props.sizes;
+      if (props.srcSet) img.srcset = props.srcSet;
+      img.src = props.src;
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -148,7 +162,7 @@ export function Menu({ open, onClose, locale, returnFocus }: MenuProps) {
                             style={{ "--tint": p.colors.card } as React.CSSProperties}
                           >
                             <span className={styles.thumb}>
-                              <Image src={p.jar} alt="" width={30} height={48} />
+                              <Image src={p.jar} alt="" {...THUMB} loading="eager" />
                             </span>
                             <span className={styles.names}>
                               <span className={styles.vi} lang="vi">

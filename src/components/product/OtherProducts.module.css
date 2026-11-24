@@ -180,6 +180,15 @@
     background-color 0.3s ease;
 }
 
+/* >= 44px hit area in every state: the button scales to 0.6 while hidden on hover devices,
+   so the ring reaches 74px unscaled (44px at 0.6). */
+.quick::after {
+  content: "";
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+}
+
 .quick:hover {
   background: var(--c-lacquer);
 }
@@ -228,6 +237,34 @@
 @media (max-width: 480px) {
   .card {
     flex-basis: 78%;
+  }
+}
+
+/* Small cards: the caption (name, sub, weight and price) takes a large, variable share of the
+   tile, so the jar sits in flow above it and shrinks to the room left; it never runs under the
+   text. Still centred with left/translate so the hover transform is unchanged. */
+@media (max-width: 640px) {
+  .card {
+    display: grid;
+    grid-template: minmax(0, 1fr) auto / 100%;
+    justify-content: normal;
+  }
+
+  .card .jar {
+    position: relative;
+    bottom: auto;
+    display: grid;
+    align-items: end;
+    justify-items: center;
+    height: 100%;
+    min-height: 0;
+    padding: 10px 0 4px;
+  }
+
+  .card .jar img {
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
   }
 }
 
