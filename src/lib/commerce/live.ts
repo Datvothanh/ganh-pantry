@@ -2,22 +2,30 @@ import { cacheLife, cacheTag } from "next/cache";
 import { commerce } from "./index";
 import type { CommerceProduct } from "./types";
 
+/**
+ * The read behind the cache, with the phase passed in so tests can reach both branches.
+ * At build time a failed read is swallowed (null, cached) so a Storefront outage never fails the
+ * build; the next revalidation replaces it. At runtime the error escapes, so a failed
+ * revalidation never overwrites the last good entry. Logs once per failed read, here.
+ */
+export async function readProductUncached(
+  handle: string,
+  phase: string | undefined,
+): Promise<CommerceProduct | null> {
+  try {
+    return await commerce.getProduct(handle);
+  } catch (err) {
+    console.error("[commerce]", err);
+    if (phase === "phase-production-build") return null;
+    throw err;
+  }
+}
+
 async function readProduct(handle: string): Promise<CommerceProduct | null> {
   "use cache";
   cacheLife("minutes");
   cacheTag(`product:${handle}`);
-  try {
-    return await commerce.getProduct(handle);
-  } catch (err) {
-    // At build time the fallback is cached so a Storefront outage never fails the build; the
-    // next revalidation replaces it. At runtime the error escapes, so a failed revalidation
-    // never overwrites the last good entry.
-    if (process.env.NEXT_PHASE === "phase-production-build") {
-      console.error("[commerce]", err);
-      return null;
-    }
-    throw err;
-  }
+  return readProductUncached(handle, process.env.NEXT_PHASE);
 }
 
 /**
@@ -29,8 +37,8 @@ async function readProduct(handle: string): Promise<CommerceProduct | null> {
 export async function getLiveProduct(handle: string): Promise<CommerceProduct | null> {
   try {
     return await readProduct(handle);
-  } catch (err) {
-    console.error("[commerce]", err);
+  } catch {
+    // Already logged by readProductUncached.
     return null;
   }
 }

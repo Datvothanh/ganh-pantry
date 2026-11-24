@@ -47,6 +47,7 @@
   aspect-ratio: 367.5 / 480.8;
   overflow: hidden;
   --card-radius: clamp(14px, 1.6vw, 28px);
+  --caption-h: 26%;
   border-radius: var(--card-radius);
   background: var(--card-bg);
   transition: transform 0.6s var(--ease-out);
@@ -56,9 +57,10 @@
   justify-content: flex-end;
 }
 
+/* Ends above the caption (name, sub, weight and price) so motif pops never cover its text. */
 .stage {
   position: absolute;
-  inset: 0;
+  inset: 0 0 var(--caption-h);
   z-index: 0;
   pointer-events: none;
 }
@@ -66,7 +68,9 @@
 .pop {
   position: absolute;
   left: var(--x);
-  top: var(--y);
+  /* Keep the whole pop (incl. rotation, ~26% of the stage height per unit of scale) inside the stage,
+     whatever --y a caller passes: PantryGrid has its own POPS table. */
+  top: clamp(calc(26% * var(--s)), var(--y), calc(100% - 26% * var(--s)));
   width: 36%;
   color: var(--accent);
   opacity: 0;
@@ -84,7 +88,7 @@
 .jar {
   position: absolute;
   left: 50%;
-  bottom: 19%;
+  bottom: 24%;
   z-index: 1;
   width: 44%;
   transform: translateX(-50%);
@@ -141,6 +145,16 @@
 .sub {
   font-size: 12px;
   opacity: 0.75;
+}
+
+.meta {
+  display: flex;
+  justify-content: center;
+  gap: 0.4em;
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .quick {

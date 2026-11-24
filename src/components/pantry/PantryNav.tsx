@@ -10,8 +10,10 @@ interface Item {
   label: string;
 }
 
-/** Line (fraction of the viewport height) a section top must pass to become active. */
-const ACTIVE_LINE = 0.45;
+/** Line (fraction of the viewport height) a section heading must cross to become active. */
+const ACTIVE_LINE = 0.5;
+/** Clearance (px) kept between the bar and a weights block. */
+const CLEAR = 12;
 
 /**
  * Sticky pill nav of the categories: shows once the first section reaches the
@@ -34,13 +36,26 @@ export function PantryNav({ items, label }: { items: Item[]; label: string }) {
       if (!els.length) return;
       let current = els[0].id;
       for (const el of els) {
-        if (el.getBoundingClientRect().top <= vh * ACTIVE_LINE) current = el.id;
+        const heading = document.getElementById(`${el.id}-title`) ?? el;
+        if (heading.getBoundingClientRect().top <= vh * ACTIVE_LINE) current = el.id;
       }
       setActive(current);
       const first = els[0].getBoundingClientRect().top;
+      // Hidden once the spec table (end of the categories) comes into view.
       const end = document.querySelector("[data-pantry-end]");
       const endTop = end ? end.getBoundingClientRect().top : Infinity;
-      setShown(first < vh * 0.8 && endTop > vh * 0.35);
+      // Never rest over a weights block: step aside while one passes the bar.
+      let blocked = false;
+      const nav = navRef.current;
+      if (nav) {
+        const bottom = vh - (parseFloat(getComputedStyle(nav).bottom) || 0);
+        const top = bottom - nav.offsetHeight - CLEAR;
+        document.querySelectorAll("[data-pantry-weights]").forEach((w) => {
+          const r = w.getBoundingClientRect();
+          if (r.top < bottom + CLEAR && r.bottom > top) blocked = true;
+        });
+      }
+      setShown(first < vh * 0.8 && endTop > vh && !blocked);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);

@@ -37,18 +37,32 @@ const SCROLL_COUPLING = 0.45;
 const PARALLAX_REACH = 0.78;
 const PARALLAX_CURVE = 0.84;
 const MIN_SLIDES = 6;
+/** Card width / row height, cycled so neighbouring photos differ in width. */
+const ASPECTS = [1.18, 0.8, 1, 0.72, 1.28, 0.9];
+/** Images start loading once the row is this close to the viewport (fraction of the viewport). */
+const PRELOAD_MARGIN = "100% 0px";
 
-/** Endless horizontal row of large rounded photos; drag, wheel-x, keys and page scroll move it. */
+/** Endless horizontal row of rounded photos of varied widths; drag, wheel-x, keys and page scroll move it. */
 export function PhotoRow({ slides, label, hint, drag }: Props) {
   const track = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // Off-screen slides sit inside a clipped track, where native lazy loading only starts once a
+  // slide is already on screen; load them all once the row comes near instead.
+  const [near, setNear] = useState(false);
   const cursor = useCursorLabel();
   const copies = Math.max(
     1,
     Math.ceil(MIN_SLIDES / Math.max(1, slides.length)),
   );
   const all = Array.from({ length: copies }, () => slides).flat();
+  // Left edge of each slide in the CSS fallback layout, in row heights (gaps added in CSS).
+  const aspect = (i: number) => ASPECTS[i % ASPECTS.length];
+  const offsets = all.map((_, i) => {
+    let x = -aspect(0) / 2;
+    for (let j = 0; j < i; j++) x += aspect(j);
+    return x;
+  });
 
   const api = useRef<{
     down: (e: PointerEvent) => void;
@@ -67,7 +81,9 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
     let items: HTMLElement[] = [];
     let imgs: (HTMLElement | null)[] = [];
     let bleed: number[] = [];
-    const m = { slideW: 0, step: 0, total: 0, half: 0, containerW: 0 };
+    let widths: number[] = [];
+    let centres: number[] = [];
+    const m = { step: 0, total: 0, half: 0, containerW: 0 };
     const s = {
       current: 0,
       target: 0,
@@ -86,13 +102,13 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
 
     const place = (x: number) => {
       if (!m.total) return;
-      const origin = m.containerW / 2 - m.slideW / 2;
-      const reach = ((m.containerW + m.slideW) / 2) * PARALLAX_REACH;
       for (let i = 0; i < items.length; i++) {
-        let u = (((i * m.step - x) % m.total) + m.total) % m.total;
+        const w = widths[i];
+        const reach = ((m.containerW + w) / 2) * PARALLAX_REACH;
+        let u = (((centres[i] - x) % m.total) + m.total) % m.total;
         if (u > m.half) u -= m.total;
         items[i].style.transform =
-          `translate3d(${(origin + u).toFixed(2)}px, 0, 0)`;
+          `translate3d(${(m.containerW / 2 - w / 2 + u).toFixed(2)}px, 0, 0)`;
         const img = imgs[i];
         if (img && bleed[i] && !reduced) {
           const k = Math.max(-1, Math.min(1, -u / reach));
@@ -131,14 +147,21 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
         it.querySelector<HTMLElement>("[data-parallax]"),
       );
       m.containerW = el.clientWidth;
-      m.slideW = items[0]?.offsetWidth ?? 0;
+      widths = items.map((it) => it.offsetWidth);
       const gap =
         parseFloat(getComputedStyle(el).getPropertyValue("--photo-gap")) || 40;
-      m.step = m.slideW + gap;
-      m.total = items.length * m.step;
+      // Centre of each slide along the row, the first one at 0.
+      centres = [];
+      let acc = 0;
+      for (let i = 0; i < items.length; i++) {
+        centres.push(acc + widths[i] / 2 - (widths[0] ?? 0) / 2);
+        acc += widths[i] + gap;
+      }
+      m.total = acc;
+      m.step = items.length ? acc / items.length : 0;
       m.half = m.total / 2;
-      bleed = imgs.map((img) =>
-        img ? Math.max(0, (img.offsetWidth - m.slideW) / 2) : 0,
+      bleed = imgs.map((img, i) =>
+        img ? Math.max(0, (img.offsetWidth - widths[i]) / 2) : 0,
       );
       place(s.current);
       setReady(true);
@@ -228,6 +251,19 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
 
   useEffect(() => cursor.hide, [cursor.hide]);
 
+  useEffect(() => {
+    const el = track.current;
+    if (!el || near || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setNear(true);
+      },
+      { rootMargin: PRELOAD_MARGIN },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
+
   const onKey = (e: KeyboardEvent) => {
     const dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (!dir) return;
@@ -278,6 +314,8 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
             style={
               {
                 "--i": i,
+                "--ar": aspect(i),
+                "--x": offsets[i],
                 ...(slide.tile ? { "--tile": slide.tile } : null),
               } as CSSProperties
             }
@@ -288,7 +326,7 @@ export function PhotoRow({ slides, label, hint, drag }: Props) {
               className={slide.tile ? styles.jar : styles.img}
               src={slide.src}
               alt={i < slides.length ? slide.alt : ""}
-              loading="lazy"
+              loading={near ? "eager" : "lazy"}
               decoding="async"
               draggable={false}
               data-parallax={slide.tile ? undefined : ""}

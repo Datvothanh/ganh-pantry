@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { useLocale } from "@/components/shell/LocaleProvider";
 import { products } from "@/content/products";
 import { gsap } from "@/lib/gsap";
-import { markIntroDone, useIntroDone } from "./intro";
+import { isIntroDone, markIntroDone, useIntroDone } from "./intro";
 import styles from "./Loader.module.css";
 
 /** Smooth closed blob through `n` points with per-point radius wobble (deterministic). */
@@ -48,12 +48,24 @@ export function Loader({ label }: { label: string }) {
   const done = useIntroDone();
   const locale = useLocale();
   const root = useRef<HTMLDivElement>(null);
+  // True while the exit wipe still runs after the hero has been told to start.
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    if (done || !root.current) return;
+    if (isIntroDone() || !root.current) return;
     const el = root.current;
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ onComplete: markIntroDone });
+      const tl = gsap.timeline({ onComplete: () => setExiting(false) });
+      // Hand off ~400 ms before the wipe ends so the hill and jars rise while it clears.
+      tl.call(
+        () => {
+          el.dataset.exiting = "";
+          setExiting(true);
+          markIntroDone();
+        },
+        undefined,
+        1.2,
+      );
       tl.from("[data-loader-logo]", { scale: 0.85, opacity: 0, duration: 0.5, ease: "power3.out" }, 0)
         .from(
           "[data-loader-shape]",
@@ -70,12 +82,12 @@ export function Loader({ label }: { label: string }) {
         .to(el, { clipPath: "inset(0% 0% 100% 0%)", duration: 0.6, ease: "power3.inOut" }, 1.0);
     }, el);
     return () => ctx.revert();
-  }, [done]);
+  }, []);
 
-  if (done) return null;
+  if (done && !exiting) return null;
 
   return (
-    <div ref={root} className={styles.loader} data-loader role="status" aria-label={label}>
+    <div ref={root} className={styles.loader} data-loader data-exiting={exiting ? "" : undefined} role="status" aria-label={label}>
       <div className={styles.stage}>
         {SHAPES.map((s) => (
           <svg

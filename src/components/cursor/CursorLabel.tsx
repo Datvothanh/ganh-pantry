@@ -16,9 +16,11 @@ import styles from "./CursorLabel.module.css";
 interface CursorApi {
   show: (text: string) => void;
   hide: () => void;
+  /** Hide at once, skipping the fade (e.g. when the hovered target is clicked). */
+  dismiss: () => void;
 }
 
-const noop: CursorApi = { show: () => {}, hide: () => {} };
+const noop: CursorApi = { show: () => {}, hide: () => {}, dismiss: () => {} };
 const CursorContext = createContext<CursorApi>(noop);
 
 /** `show(text)` / `hide()` for the pointer-following pill label. */
@@ -27,7 +29,9 @@ export const useCursorLabel = (): CursorApi => useContext(CursorContext);
 export function CursorProvider({ children }: { children: ReactNode }) {
   const [text, setText] = useState("");
   const [visible, setVisible] = useState(false);
+  const [instant, setInstant] = useState(false);
   const el = useRef<HTMLDivElement>(null);
+  const pillEl = useRef<HTMLSpanElement>(null);
   const fine = useRef(false);
 
   useEffect(() => {
@@ -72,16 +76,27 @@ export function CursorProvider({ children }: { children: ReactNode }) {
   const show = useCallback((t: string) => {
     if (!fine.current) return;
     setText(t);
+    setInstant(false);
     setVisible(true);
   }, []);
   const hide = useCallback(() => setVisible(false), []);
-  const api = useMemo(() => ({ show, hide }), [show, hide]);
+  const dismiss = useCallback(() => {
+    // Drop the pill in this frame, before React re-renders.
+    const pill = pillEl.current;
+    if (pill) {
+      pill.dataset.instant = "1";
+      delete pill.dataset.visible;
+    }
+    setInstant(true);
+    setVisible(false);
+  }, []);
+  const api = useMemo(() => ({ show, hide, dismiss }), [show, hide, dismiss]);
 
   return (
     <CursorContext.Provider value={api}>
       {children}
       <div ref={el} className={styles.root} aria-hidden="true" data-cursor-label>
-        <span className={styles.pill} data-visible={visible ? "1" : undefined}>
+        <span ref={pillEl} className={styles.pill} data-visible={visible ? "1" : undefined} data-instant={instant ? "1" : undefined}>
           <span className={styles.dot} />
           {text}
         </span>

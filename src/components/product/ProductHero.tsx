@@ -184,10 +184,8 @@ export function ProductHero({
           `${Math.max(0.3, (bottom - top) / t.offsetHeight)}`,
         );
       const s = t.offsetHeight;
-      const restY = Math.max(
-        top + s / 2,
-        Math.min((top + bottom) / 2, bottom - s / 2),
-      );
+      // The title rests right above the jar whatever its line count (spare room goes above it).
+      const restY = Math.max(top + s / 2, bottom - s / 2);
       st.style.setProperty("--ph-title-rest-y", `${restY}px`);
       const cs = getComputedStyle(st);
       const riseRaw = cs.getPropertyValue("--ph-jar-rise").trim();

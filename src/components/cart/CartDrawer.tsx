@@ -160,7 +160,7 @@ export function CartDrawer() {
                     </div>
                   </div>
                   <div className={styles.side}>
-                    <p className={styles.price}>{formatMoney(line.total, locale)}</p>
+                    <p className={styles.price} data-cart-line-price>{formatMoney(line.total, locale)}</p>
                     <button
                       type="button"
                       className={styles.remove}

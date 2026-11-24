@@ -239,3 +239,80 @@
     transition: none;
   }
 }
+
+/* Above 1920px the pills, buy row and sticky bar scale with the viewport like the display type. */
+@media (min-width: 1921px) {
+  .weights {
+    gap: 0.26vw;
+    margin-top: 0.73vw;
+  }
+
+  .weight {
+    width: 3.02vw;
+    height: 3.02vw;
+    font-size: 0.625vw;
+  }
+
+  .block {
+    padding-top: 4.17vw;
+  }
+
+  .blockInner {
+    gap: 1.04vw 2.5vw;
+    padding-block: 1.875vw;
+  }
+
+  .priceCol {
+    min-width: 6.25vw;
+  }
+
+  .label {
+    font-size: 0.625vw;
+  }
+
+  .price {
+    font-size: 3.17vw;
+  }
+
+  .weightNote {
+    font-size: 0.68vw;
+  }
+
+  .qty {
+    height: 2.4vw;
+  }
+
+  .qty button {
+    width: 2.29vw;
+    font-size: 1.04vw;
+  }
+
+  .qty output {
+    min-width: 1.46vw;
+    font-size: 0.83vw;
+  }
+
+  .addWrap .add {
+    min-width: 9.9vw;
+    min-height: 2.4vw;
+    padding-inline: 1.46vw;
+    font-size: 0.68vw;
+  }
+
+  .barInner {
+    max-width: 39.6vw;
+    padding: 0.52vw 0.52vw 0.52vw 1.46vw;
+  }
+
+  .barName {
+    font-size: 1.25vw;
+  }
+
+  .barWeight {
+    font-size: 0.625vw;
+  }
+
+  .barPrice {
+    font-size: 0.94vw;
+  }
+}

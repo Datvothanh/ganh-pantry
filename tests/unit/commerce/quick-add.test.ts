@@ -9,6 +9,8 @@ vi.mock("react", async (orig) => ({
   useRef: (v: unknown) => ({ current: v }),
   useState: (v: unknown) => [v, vi.fn()],
 }));
+let locale = "en";
+vi.mock("@/components/shell/LocaleProvider", () => ({ useLocale: () => locale }));
 vi.mock("@/components/cursor", () => ({ useCursorLabel: () => ({ show: vi.fn(), hide: vi.fn() }) }));
 const store = { addToCart: vi.fn(), openCart: vi.fn() };
 vi.mock("@/components/cart/store", () => store);
@@ -43,14 +45,25 @@ function find(node: ReactNode, pred: (e: ReactElement<Record<string, unknown>>) 
   return out;
 }
 
-type Card = { handle: string; quickAdd?: { variantId: string; price: Money; label: string } };
+type Card = { handle: string; quickAdd?: { variantId: string; weight: string; price: Money; label: string } };
+const text = (node: ReactNode): string =>
+  Array.isArray(node)
+    ? node.map(text).join("")
+    : typeof node === "string" || typeof node === "number"
+      ? String(node)
+      : node && typeof node === "object" && "props" in node
+        ? text((node as ReactElement<Record<string, unknown>>).props.children as ReactNode)
+        : "";
 const clickQuick = (tree: ReactNode, handle: string) => {
   const [btn] = find(tree, (e) => e.props["data-quick-add"] === handle);
   (btn.props.onClick as (e: unknown) => void)({ preventDefault() {}, stopPropagation() {} });
 };
 const card = (cards: Card[], handle: string) => cards.find((c) => c.handle === handle)!;
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  locale = "en";
+});
 
 describe("quick-add", () => {
   it("PantryGrid and OtherProducts pass the card's variant and live price to addToCart", async () => {
@@ -58,7 +71,7 @@ describe("quick-add", () => {
     const { OtherProducts } = await import("@/components/product/OtherProducts");
     const price = { amount: 16.5, currencyCode: "USD" };
     const cards = [
-      { handle: "mut-gung", href: "/", name: "n", sub: "s", image: "i", card: "#fff", accent: "#000", motif: "leaf", quickAdd: { variantId: "314g", price, label: "l" } },
+      { handle: "mut-gung", href: "/", name: "n", sub: "s", image: "i", card: "#fff", accent: "#000", motif: "leaf", quickAdd: { variantId: "314g", weight: "314 g", price, label: "l" } },
     ] as never;
     clickQuick(PantryGrid({ cards, discover: "d" }), "mut-gung");
     expect(store.addToCart).toHaveBeenLastCalledWith("mut-gung", "314g", 1, price);
@@ -67,12 +80,38 @@ describe("quick-add", () => {
     expect(store.addToCart).toHaveBeenCalledTimes(2);
   });
 
+  it("OtherProducts shows the quick-add variant's weight and price and names them in the aria-label (en, vi)", async () => {
+    const { OtherProducts, QuickAddMeta } = await import("@/components/product/OtherProducts");
+    const price = { amount: 9, currencyCode: "USD" };
+    const cards = [
+      { handle: "mut-quat", href: "/", name: "Chanh Muối", sub: "s", image: "i", card: "#fff", accent: "#000", motif: "leaf", quickAdd: { variantId: "314g", weight: "314 g", price, label: "Quick add" } },
+    ] as never;
+    const render = () => OtherProducts({ title: ["t"], cards, discover: "d" });
+    const label = (tree: ReactNode) => find(tree, (e) => e.props["data-quick-add"] === "mut-quat")[0].props["aria-label"];
+    // QuickAddMeta is a component element in the shallow tree: render it.
+    const meta = (tree: ReactNode) =>
+      find(tree, (e) => e.type === QuickAddMeta)
+        .map((e) => text(QuickAddMeta(e.props as never)))
+        .join("");
+
+    let tree = render();
+    expect(label(tree)).toBe("Add Chanh Muối 314 g, 9 USD");
+    expect(meta(tree)).toContain("314 g");
+    expect(meta(tree)).toContain("$9");
+
+    locale = "vi";
+    tree = render();
+    expect(label(tree)).toBe("Thêm Chanh Muối 314 g, 9 USD");
+    expect(meta(tree)).toContain("314 g");
+  });
+
   it("PantryPage builds quick-add from the first available variant and its live price", async () => {
     const { PantryPage } = await import("@/components/pantry/PantryPage");
     const tree = await PantryPage({ locale: "en" });
     const cards = find(tree, (e) => Array.isArray(e.props.cards)).flatMap((e) => e.props.cards as Card[]);
     expect(card(cards, "mut-gung").quickAdd).toMatchObject({
       variantId: "314g",
+      weight: "314 g",
       price: { amount: 16.5, currencyCode: "USD" },
     });
   });
@@ -85,6 +124,7 @@ describe("quick-add", () => {
     const cards = find(page, (e) => Array.isArray(e.props.cards)).flatMap((e) => e.props.cards as Card[]);
     expect(card(cards, "mut-gung").quickAdd).toMatchObject({
       variantId: "314g",
+      weight: "314 g",
       price: { amount: 16.5, currencyCode: "USD" },
     });
   });

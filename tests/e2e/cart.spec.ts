@@ -110,3 +110,42 @@ test("checkout from a real locale page closes the drawer and unlocks scroll", as
   await expect(page.locator("[data-cart-root]")).toHaveAttribute("data-state", "closed");
   expect(await page.evaluate(() => document.documentElement.style.overflow)).not.toBe("hidden");
 });
+
+test("drawer line price and subtotal share one money font", async ({ page }) => {
+  // A real page: the harness does not load the site fonts, so every family would read the same.
+  await page.goto("/products/mut-gung");
+  const card = page.locator("[data-other-products] [data-product-card]").first();
+  await card.scrollIntoViewIfNeeded();
+  await card.hover();
+  await card.locator("button[data-quick-add]").click();
+  await expect(drawer(page)).toBeVisible();
+  await expect(drawer(page).locator("[data-cart-line]")).toHaveCount(1);
+  const family = (sel: string) => drawer(page).locator(sel).evaluate((el) => getComputedStyle(el).fontFamily);
+  const line = await family("[data-cart-line-price]");
+  expect(line).toBe(await family("[data-cart-subtotal]"));
+  // And it is the display face, not the body sans the price used to inherit.
+  expect(line).not.toBe(await family("[data-cart-qty]"));
+});
+
+test("drawer controls have at least 44px hit areas at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/dev/cart/harness.html");
+  await gung(page).click();
+  await expect(gung(page)).toHaveAttribute("data-status", "added");
+  await page.locator("[data-cart-button]").click();
+  await expect(drawer(page)).toBeVisible();
+  await expect(drawer(page).locator("[data-cart-line]")).toHaveCount(1);
+  // Let the slide-in finish so the boxes are final.
+  await expect.poll(async () => (await drawer(page).boundingBox())?.x).toBe(0);
+  const targets = [
+    drawer(page).locator("header button"),
+    drawer(page).locator("[data-cart-decrease]"),
+    drawer(page).locator("[data-cart-increase]"),
+    drawer(page).locator("[data-cart-remove]"),
+  ];
+  for (const t of targets) {
+    const box = (await t.boundingBox())!;
+    expect(box.width, (await t.getAttribute("aria-label")) ?? "").toBeGreaterThanOrEqual(44);
+    expect(box.height, (await t.getAttribute("aria-label")) ?? "").toBeGreaterThanOrEqual(44);
+  }
+});

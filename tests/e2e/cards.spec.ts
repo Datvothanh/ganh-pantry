@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 // Skip the session loader so the page is interactive right away.
 test.beforeEach(async ({ page }) => {
@@ -101,4 +101,77 @@ for (const width of [1440, 1920, 2560, 390]) {
       expect(filled || centred, JSON.stringify(r)).toBe(true);
     }
   });
+}
+
+/** Every product card on the page: the PDP "other products" row, or the pantry grids. */
+const cardsOn = (page: Page, path: string) =>
+  page.locator(path.endsWith("/pantry") ? "[data-product-card]" : "[data-other-products] [data-product-card]");
+
+/** Each motif, forced fully popped, stays above the caption box (and inside the card). */
+for (const path of ["/products/mut-gung", "/pantry"]) {
+  for (const { width, height } of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    test(`hover motifs stay out of the caption box on ${path} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto(path);
+      const cards = cardsOn(page, path);
+      const n = await cards.count();
+      expect(n).toBeGreaterThan(0);
+      for (let i = 0; i < n; i++) {
+        const card = cards.nth(i);
+        await card.scrollIntoViewIfNeeded();
+        // Keyboard focus on the link pops the motifs without depending on the pointer.
+        await page.mouse.move(5, 5);
+        await card.locator("a").focus();
+        await page.keyboard.press("Shift");
+        await card.locator("a").focus();
+        await expect.poll(() => motifOpacity(card)).toBe(1);
+        // Wait out the spring so the boxes are final.
+        await page.waitForTimeout(1100);
+        const r = await card.evaluate((el) => {
+          const caption = el.querySelector("[class*='caption']")!.getBoundingClientRect();
+          const c = el.getBoundingClientRect();
+          return {
+            captionTop: caption.top,
+            cardTop: c.top,
+            pops: [...el.querySelectorAll("[data-motif]")].map((m) => {
+              const b = m.getBoundingClientRect();
+              return { top: b.top, bottom: b.bottom };
+            }),
+          };
+        });
+        for (const p of r.pops) {
+          expect(p.bottom, `card ${i}: motif bottom ${p.bottom} vs caption top ${r.captionTop}`).toBeLessThanOrEqual(r.captionTop + 0.5);
+          expect(p.top, `card ${i}: motif above the card`).toBeGreaterThanOrEqual(r.cardTop - 0.5);
+        }
+      }
+    });
+  }
+}
+
+for (const path of ["/products/mut-gung", "/pantry"]) {
+  for (const [locale, prefix, add] of [
+    ["en", "", "Add"],
+    ["vi", "/vi", "Thêm"],
+  ] as const) {
+    test(`quick-add shows the variant weight and price and names them on ${path} (${locale})`, async ({ page }) => {
+      await page.goto(prefix + path);
+      const cards = cardsOn(page, path);
+      const n = await cards.count();
+      expect(n).toBeGreaterThan(0);
+      for (let i = 0; i < n; i++) {
+        const card = cards.nth(i);
+        const meta = (await card.locator("[data-quick-meta]").innerText()).replace(/\s+/g, " ");
+        const weight = meta.match(/\d+ g/)?.[0];
+        expect(weight, meta).toBeTruthy();
+        expect(meta).toContain("$");
+        const name = (await card.locator("a").locator("[lang='vi']").innerText()).trim();
+        const label = (await card.locator("button[data-quick-add]").getAttribute("aria-label"))!;
+        expect(label.startsWith(`${add} ${name} ${weight}, `), label).toBe(true);
+        expect(label).toMatch(/, \d+(\.\d+)? USD$/);
+      }
+    });
+  }
 }

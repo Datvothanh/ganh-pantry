@@ -32,6 +32,10 @@
     transform 0.45s var(--ease-spring);
 }
 
+.pill[data-instant]:not([data-visible]) {
+  transition: none;
+}
+
 .pill[data-visible] {
   opacity: 1;
   transform: scale(1);

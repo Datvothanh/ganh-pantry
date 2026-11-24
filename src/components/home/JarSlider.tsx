@@ -62,10 +62,11 @@ export function JarSlider({ items, headline, prompt, badge, discover }: Props) {
 
   // Plain clicks fly the jar into the product hero; modified clicks keep the browser default.
   const fly = (e: MouseEvent<HTMLAnchorElement>, item: JarSliderItem) => {
+    // The pill must not linger over the jar while it flies or the page changes.
+    if (!e.defaultPrevented) cursor.dismiss();
     if (reduced || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (!launchJarFlight(e.currentTarget, item.handle)) return;
     e.preventDefault();
-    cursor.hide();
     router.push(item.href);
   };
 
@@ -87,7 +88,7 @@ export function JarSlider({ items, headline, prompt, badge, discover }: Props) {
       <div className={styles.wrap} data-jar-slider-wrap="" data-lenis-prevent="">
         <div className={styles.marquee}>
           <div className={styles.track} data-jar-slider-track="">
-            {items.map((item, i) => (
+            {items.map((item) => (
               <Link
                 key={item.key}
                 href={item.href}
@@ -109,7 +110,7 @@ export function JarSlider({ items, headline, prompt, badge, discover }: Props) {
                   width={630}
                   height={1013}
                   draggable={false}
-                  loading={i < 6 ? "eager" : "lazy"}
+                  loading="eager"
                   decoding="async"
                 />
                 <canvas className={styles.label} aria-hidden="true" />

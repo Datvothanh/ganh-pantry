@@ -9,9 +9,13 @@
 
 /* Set before hydration by the boot script when the intro already played; without
    scripts (or with reduced motion) `data-motion` is missing and the loader never shows. */
-:global(html[data-intro-done]) .loader,
+:global(html[data-intro-done]) .loader:not([data-exiting]),
 :global(html:not([data-motion])) .loader {
   display: none;
+}
+
+.loader[data-exiting] {
+  pointer-events: none;
 }
 
 .stage {

@@ -107,10 +107,22 @@ for (const [width, height] of [
   test(`settled jar clears the description at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto("/products/mut-gung");
-    await expect(jar(page)).toBeVisible();
-    await page.waitForTimeout(300);
+    // Settled: hydrated (hero announced; the route-change scroll reset has run), fonts loaded.
+    await expect(jar(page)).toHaveAttribute("data-hero-ready", "true", { timeout: 10_000 });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
     await page.evaluate(() => window.scrollTo(0, 700));
-    await page.waitForTimeout(1200);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(700);
+    // The scrub has reached its end pose (--ph = 1) and the layout has had a frame to apply it.
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          getComputedStyle(document.querySelector("[data-product-hero] > div")!).getPropertyValue("--ph").trim(),
+        ),
+      )
+      .toBe("1.0000");
+    await page.evaluate(
+      () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
+    );
     expect(await jarOverlap(page)).toBeLessThanOrEqual(0);
   });
 }

@@ -12,8 +12,12 @@ import { useCursorLabel } from "@/components/cursor";
 import { MotifSvg } from "@/components/motifs";
 import { prefersReducedMotion } from "@/components/motion/useReducedMotion";
 import type { Motif } from "@/content/products";
+import { useLocale } from "@/components/shell/LocaleProvider";
+import { formatMoney } from "@/lib/commerce/format";
+import type { Locale } from "@/lib/i18n";
 import type { Money } from "@/lib/commerce/types";
 import { openCart, addToCart } from "@/components/cart/store";
+import { pdpStrings } from "./strings";
 import styles from "./OtherProducts.module.css";
 
 export interface OtherCard {
@@ -25,8 +29,11 @@ export interface OtherCard {
   card: string;
   accent: string;
   motif: Motif;
-  /** Quick-add "+" button: the variant it adds, its live unit price and its accessible label. */
-  quickAdd?: { variantId: string; price: Money; label: string };
+  /**
+   * Quick-add "+" button: the variant it adds, its weight label and live unit price. Shown in the
+   * caption and named in the button's aria-label; `label` is the generic fallback.
+   */
+  quickAdd?: { variantId: string; weight: string; price: Money; label: string };
 }
 
 interface Props {
@@ -41,8 +48,8 @@ const POPS = [
   { x: 78, y: 20, s: 0.7, r: 24, d: 0.05 },
   { x: 84, y: 62, s: 0.9, r: -32, d: 0.1 },
   { x: 16, y: 70, s: 0.75, r: 40, d: 0.08 },
-  { x: 52, y: 88, s: 0.6, r: 12, d: 0.14 },
-  { x: 50, y: 10, s: 0.5, r: -50, d: 0.12 },
+  { x: 52, y: 80, s: 0.6, r: 12, d: 0.14 },
+  { x: 50, y: 17, s: 0.5, r: -50, d: 0.12 },
 ];
 
 const DRAG_LOCK = 8;
@@ -50,11 +57,32 @@ const EASE = 0.075;
 const FRICTION = 0.92;
 const FLING = 18;
 
+type QuickAdd = NonNullable<OtherCard["quickAdd"]>;
+
+/** Accessible name of a card's quick-add button: product, variant weight and price (current locale). */
+export function quickAddLabel(locale: Locale, name: string, quickAdd: QuickAdd): string {
+  const { weight, price } = quickAdd;
+  return pdpStrings[locale].quickAddLabel(name, weight, `${price.amount} ${price.currencyCode}`);
+}
+
+/** Caption line with the quick-add variant's weight and price. Shared by every card grid. */
+export function QuickAddMeta({ quickAdd, className }: { quickAdd: QuickAdd; className?: string }) {
+  const locale = useLocale();
+  return (
+    <p className={className ?? styles.meta} data-quick-meta="">
+      <span>{quickAdd.weight}</span>
+      <span aria-hidden="true">·</span>
+      <span>{formatMoney(quickAdd.price, locale)}</span>
+    </p>
+  );
+}
+
 /** "The other products": draggable row of pastel cards whose motif pops on hover. */
 export function OtherProducts({ title, cards, discover }: Props) {
   const track = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const cursor = useCursorLabel();
+  const locale = useLocale();
   const drag = useRef<{
     down: (e: PointerEvent) => void;
     move: (e: PointerEvent) => void;
@@ -255,7 +283,7 @@ export function OtherProducts({ title, cards, discover }: Props) {
                 type="button"
                 className={styles.quick}
                 data-quick-add={c.handle}
-                aria-label={c.quickAdd.label}
+                aria-label={quickAddLabel(locale, c.name, c.quickAdd)}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.preventDefault();
@@ -274,6 +302,7 @@ export function OtherProducts({ title, cards, discover }: Props) {
                 </span>
                 <span className={styles.sub}>{c.sub}</span>
               </Link>
+              {c.quickAdd ? <QuickAddMeta quickAdd={c.quickAdd} /> : null}
             </div>
           </div>
         ))}

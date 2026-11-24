@@ -1,21 +1,34 @@
 .pills {
   display: flex;
-  gap: 2px;
+  /* 44px hit boxes with -3px margins: an 8px gap keeps neighbouring boxes apart (with subpixel slack). */
+  gap: 8px;
 }
 
+/* 44px hit area (anchor) drawn as a 38px circle (::before); -3px margins keep the 38px footprint. */
 .pill {
+  position: relative;
+  isolation: isolate;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  margin: -3px;
   border-radius: 50%;
-  border: 1px solid currentColor;
   color: var(--c-lacquer);
   font: 600 13px/1 var(--font-text), sans-serif;
   letter-spacing: 0.02em;
+  transition: color 0.3s ease;
+}
+
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  border-radius: 50%;
+  border: 1px solid currentColor;
   transition:
     background-color 0.3s ease,
-    color 0.3s ease,
     border-color 0.3s ease;
 }
 
@@ -24,16 +37,19 @@
 }
 
 .pill[aria-current="true"] {
+  color: var(--c-cream);
+}
+
+.pill[aria-current="true"]::before {
   background: var(--c-red);
   border-color: var(--c-red);
-  color: var(--c-cream);
 }
 
 .pills[data-tone="dark"] .pill {
   color: var(--c-cream);
 }
 
-.pills[data-tone="dark"] .pill[aria-current="true"] {
+.pills[data-tone="dark"] .pill[aria-current="true"]::before {
   background: var(--c-flame);
   border-color: var(--c-flame);
 }

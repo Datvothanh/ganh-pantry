@@ -3,7 +3,7 @@ import type { Locale } from "@/content/products";
 export const pantryStrings = {
   en: {
     title: "Pantry",
-    heroLine: ["Carried by hand,", "one jar at a time"],
+    heroLine: ["From our kitchens,", "one jar at a time."],
     heroAlt: "The eight GÁNH jars side by side",
     intro:
       "We cook in small batches with the people who grow our fruit, chilies and honey. The pantry gathers everything we make — preserves for Tết, fiery sauces, slow pickles and raw honey — each one carried from a Vietnamese kitchen to yours.",
@@ -21,7 +21,7 @@ export const pantryStrings = {
   },
   vi: {
     title: "Gian bếp",
-    heroLine: ["Gánh bằng tay,", "từng hũ một"],
+    heroLine: ["Từ gian bếp Việt,", "từng hũ một."],
     heroAlt: "Tám hũ GÁNH xếp cạnh nhau",
     intro:
       "Chúng tôi nấu từng mẻ nhỏ cùng những người trồng trái cây, ớt và nuôi ong. Gian bếp gom tất cả những gì chúng tôi làm — mứt Tết, tương cay, đồ muối chua và mật ong nguyên chất — gánh từ gian bếp Việt tới nhà bạn.",

@@ -7,6 +7,39 @@ vi.mock("@/lib/commerce/index", () => ({ commerce: { getProduct: (h: string) => 
 
 beforeEach(() => vi.clearAllMocks());
 
+const BUILD = "phase-production-build";
+const RUNTIME = "phase-production-server";
+
+describe("readProductUncached (test seam for the cached read)", () => {
+  it("returns the product in either phase", async () => {
+    const { readProductUncached } = await import("@/lib/commerce/live");
+    const p: CommerceProduct = { handle: "mut-gung", title: "x", variants: [] };
+    getProduct.mockResolvedValue(p);
+    expect(await readProductUncached("mut-gung", BUILD)).toBe(p);
+    expect(await readProductUncached("mut-gung", RUNTIME)).toBe(p);
+  });
+
+  it("in the build phase swallows a failed read as null and logs it once", async () => {
+    const { readProductUncached } = await import("@/lib/commerce/live");
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    getProduct.mockRejectedValue(new Error("boom"));
+    expect(await readProductUncached("mut-gung", BUILD)).toBeNull();
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+
+  it("at runtime rethrows a failed read (so the last good cache entry survives) and logs it once", async () => {
+    const { readProductUncached } = await import("@/lib/commerce/live");
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const err = new Error("boom");
+    getProduct.mockRejectedValue(err);
+    await expect(readProductUncached("mut-gung", RUNTIME)).rejects.toBe(err);
+    await expect(readProductUncached("mut-gung", undefined)).rejects.toBe(err);
+    expect(spy).toHaveBeenCalledTimes(2);
+    spy.mockRestore();
+  });
+});
+
 describe("getLiveProduct", () => {
   it("returns the product", async () => {
     const { getLiveProduct } = await import("@/lib/commerce/live");
@@ -15,12 +48,12 @@ describe("getLiveProduct", () => {
     expect(await getLiveProduct("mut-gung")).toBe(p);
   });
 
-  it("falls back to null inside the cached function, so a failed read never fails a prerender", async () => {
-    const live = await import("@/lib/commerce/live");
+  it("falls back to null when the read throws at runtime, with one log line per failed read", async () => {
+    const { getLiveProduct } = await import("@/lib/commerce/live");
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     getProduct.mockRejectedValue(new Error("boom"));
-    expect(await live.getLiveProduct("mut-gung")).toBeNull();
-    expect(Object.keys(live).sort()).toEqual(["getLiveProduct"]);
+    expect(await getLiveProduct("mut-gung")).toBeNull();
+    expect(spy).toHaveBeenCalledTimes(1);
     spy.mockRestore();
   });
 });

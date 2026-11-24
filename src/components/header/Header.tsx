@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { useCart } from "@/components/cart/store";
 import { Menu } from "@/components/menu/Menu";
 import { getDict } from "@/content/dict";
 import { href, type Locale } from "@/lib/i18n";
@@ -10,99 +11,106 @@ import { HeaderCartSlot } from "./HeaderCartSlot";
 import { LangSwitch } from "./LangSwitch";
 import styles from "./Header.module.css";
 
+/** Scroll depth (px) below which the bar always shows. */
+const HIDE_AFTER = 100;
+
 export function Header({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [condensed, setCondensed] = useState(false);
+  const [down, setDown] = useState(false);
   const [dark, setDark] = useState(false);
+  const { open: cartOpen } = useCart();
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
+  // Hide the bar while reading down; bring it back when scrolling up or near the top.
   useEffect(() => {
     let last = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
-      // Hide the centre logo while reading down; bring it back when scrolling up or near the top.
-      setCondensed(y > 120 && y > last);
+      if (y <= HIDE_AFTER) setDown(false);
+      else if (Math.abs(y - last) >= 2) setDown(y > last);
+      else return;
       last = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
+    // Hydrated: tests and tools wait for this before scrolling.
+    headerRef.current?.setAttribute("data-ready", "1");
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Switch to light-on-dark while a `[data-header-dark]` section sits under the header strip.
+  // Light-on-dark while a `[data-header-dark]` section covers the middle of the bar band
+  // (not y=0, so a thin dark sliver at the very top does not flip it).
   useEffect(() => {
-    let io: IntersectionObserver | null = null;
-    const under = new Set<Element>();
-    const observe = () => {
-      io?.disconnect();
-      under.clear();
-      io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) under.add(e.target);
-            else under.delete(e.target);
-          }
-          setDark(under.size > 0);
-        },
-        { rootMargin: `0px 0px -${Math.max(0, window.innerHeight - 70)}px 0px` },
-      );
-      document.querySelectorAll("[data-header-dark]").forEach((el) => io?.observe(el));
-    };
-    observe();
-    // Pages mount their own dark sections; re-scan when the DOM changes shape.
     let pending = 0;
-    const mo = new MutationObserver(() => {
-      if (pending) return;
-      pending = requestAnimationFrame(() => {
-        pending = 0;
-        observe();
+    const sample = () => {
+      pending = 0;
+      const bar = barRef.current;
+      const mid = bar ? bar.offsetTop + bar.offsetHeight / 2 : 49;
+      let under = false;
+      document.querySelectorAll("[data-header-dark]").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top <= mid && r.bottom >= mid && r.height > 0) under = true;
       });
-    });
+      setDark(under);
+    };
+    const schedule = () => {
+      if (!pending) pending = requestAnimationFrame(sample);
+    };
+    sample();
+    const mo = new MutationObserver(schedule);
     mo.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener("resize", observe);
+    const ro = new ResizeObserver(schedule);
+    ro.observe(document.body);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
     return () => {
-      io?.disconnect();
       mo.disconnect();
+      ro.disconnect();
       cancelAnimationFrame(pending);
-      window.removeEventListener("resize", observe);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
     };
   }, []);
 
   const open = useCallback(() => setMenuOpen(true), []);
   const close = useCallback(() => setMenuOpen(false), []);
+  const hidden = down && !menuOpen && !cartOpen;
 
   return (
     <>
-      <header className={styles.header} data-site-header data-condensed={condensed ? "1" : undefined}
+      <header
+        className={styles.header}
+        data-site-header
+        ref={headerRef}
+        data-condensed={down ? "1" : undefined}
+        data-hidden={hidden ? "1" : undefined}
         data-tone={dark ? "dark" : undefined}
+        // Keyboard focus landing in the bar (e.g. focus returning from the menu) shows it.
+        onFocus={() => setDown(false)}
       >
-        <div className={styles.left}>
+        <div className={styles.left} inert={cartOpen}>
           <LangSwitch locale={locale} label={t.header.languages} tone={dark ? "dark" : "light"} />
         </div>
-        <Link href={href(locale, "/")} className={styles.logo} aria-label={t.header.home}>
+        <Link href={href(locale, "/")} className={styles.logo} aria-label={t.header.home} inert={cartOpen}>
           <Logo locale={locale} />
         </Link>
-        <div className={styles.right}>
+        <div ref={barRef} className={styles.right}>
           <button
             ref={toggleRef}
             type="button"
-            className={styles.menuPill}
+            className={styles.menuToggle}
             data-menu-toggle
             aria-expanded={menuOpen}
             aria-controls="site-menu"
+            inert={cartOpen}
             onClick={open}
           >
-            {t.menu.open}
-          </button>
-          <button
-            type="button"
-            className={styles.round}
-            aria-label={t.menu.openLabel}
-            aria-expanded={menuOpen}
-            aria-controls="site-menu"
-            onClick={open}
-          >
-            <span className={styles.diamond} />
+            <span className={styles.menuPill}>{t.menu.open}</span>
+            <span className={styles.round} aria-hidden="true">
+              <span className={styles.diamond} data-menu-diamond />
+            </span>
           </button>
           <HeaderCartSlot />
         </div>

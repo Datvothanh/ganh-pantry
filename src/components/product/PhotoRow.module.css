@@ -1,5 +1,9 @@
+/*
+ * Row height is fixed; each card is --ar row heights wide (cycled in PhotoRow.tsx), so about three
+ * photos of different widths share the viewport and none is shown wider than its 1024px source.
+ */
 .row {
-  --photo-w: 61vw;
+  --photo-h: 30vw;
   --photo-gap: 40px;
   --photo-bleed: 16%;
   margin-top: clamp(80px, 9vw, 180px);
@@ -18,7 +22,7 @@
 
 .track {
   position: relative;
-  height: calc(var(--photo-w) * 702 / 980);
+  height: var(--photo-h);
   cursor: grab;
   touch-action: pan-y;
 }
@@ -37,7 +41,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--photo-w);
+  width: calc(var(--photo-h) * var(--ar, 1));
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -49,7 +53,7 @@
 
 /* Before JS measures the row: a plain CSS row from the centre (visible without JS). */
 .row:not([data-ready]) .slide {
-  left: calc((100% - var(--photo-w)) / 2 + var(--i, 0) * (var(--photo-w) + var(--photo-gap)));
+  left: calc(50% + var(--x, 0) * var(--photo-h) + var(--i, 0) * var(--photo-gap));
 }
 
 /* With motion and scripts, slides fade in once JS has placed them. */
@@ -91,14 +95,14 @@
 
 @media (max-width: 1024px) {
   .row {
-    --photo-w: 74vw;
+    --photo-h: 46vw;
     --photo-gap: 24px;
   }
 }
 
 @media (max-width: 480px) {
   .row {
-    --photo-w: 84vw;
+    --photo-h: 64vw;
     --photo-gap: 16px;
   }
 }

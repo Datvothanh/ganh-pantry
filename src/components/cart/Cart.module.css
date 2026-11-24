@@ -110,8 +110,8 @@
 .close {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 50%;
   background: var(--c-lacquer);
@@ -197,8 +197,8 @@
 }
 
 .stepper button {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: 0;
   background: none;
   border-radius: 50%;
@@ -230,14 +230,20 @@
   justify-content: space-between;
 }
 
+/* Same money face as the subtotal and the sticky bar: display serif. */
 .price {
-  font-weight: 600;
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--c-lacquer);
   font-variant-numeric: tabular-nums;
 }
 
 .remove {
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
   border: 0;
   border-radius: 50%;
   background: none;

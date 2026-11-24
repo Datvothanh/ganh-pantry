@@ -41,25 +41,29 @@
   white-space: nowrap;
 }
 
+/*
+ * Reveal: solid letters rise one after another out of a mask line just under the word box
+ * (open above and to the sides, so diacritics and the dot below are never cut once in place).
+ */
+.title .word {
+  clip-path: inset(-0.6em -0.3em -0.2em -0.3em);
+}
+
 .char {
   display: inline-block;
-  opacity: 0;
-  transform: translate3d(0, 0.4em, 0) rotate(8deg);
-  transform-origin: 0 100%;
+  transform: translate3d(0, 1.6em, 0);
 }
 
 .stage[data-play] .char {
-  animation: charIn 1s var(--ease-out) both;
+  animation: charIn 0.9s var(--ease-out) both;
   animation-delay: calc(0.1s + var(--i) * 0.045s);
 }
 
 @keyframes charIn {
   from {
-    opacity: 0;
-    transform: translate3d(0, 0.4em, 0) rotate(8deg);
+    transform: translate3d(0, 1.6em, 0);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }

@@ -4,7 +4,8 @@
   --ph-stage-h: max(100svh, 560px);
   --ph-jar-rise: -24vh;
   --ph-jar-rotate: 20deg;
-  --ph-jar-scale-to: 0.8;
+  /* The jar shrinks as it rises so it never reaches the header bar. */
+  --ph-jar-scale-to: 0.6;
   --ph-jar-w: clamp(220px, 29vw, 600px);
   /* Jar top as a fraction of the stage height. */
   --ph-jar-top: 0.74;
@@ -121,7 +122,7 @@
 
 @media (max-width: 1024px) {
   .page {
-    --ph-jar-scale-to: 0.7;
+    --ph-jar-scale-to: 0.6;
     --ph-jar-w: clamp(200px, 40vw, 380px);
     --ph-jar-top: 0.64;
     --ph-intro-min: clamp(40px, 8vh, 100px);
@@ -152,7 +153,8 @@
 
 @media (max-width: 480px) {
   .page {
-    --ph-jar-scale-to: 0.64;
+    --ph-jar-rise: -14vh;
+    --ph-jar-scale-to: 0.6;
     --ph-jar-w: 56vw;
     --ph-jar-top: 0.6;
   }
@@ -168,5 +170,53 @@
           var(--ph-stage-h) + 56px
       )
     );
+  }
+}
+
+/* Above 1920px the copy, spec row and their measures scale with the viewport like the display type. */
+@media (min-width: 1921px) {
+  .intro {
+    gap: 2.08vw;
+    max-width: min(62.5vw, calc(100% / 12 * 10));
+  }
+
+  .description {
+    max-width: 57.3vw;
+    font-size: 1.46vw;
+  }
+
+  .after {
+    gap: 0.52vw;
+    max-width: 46.9vw;
+    font-size: 0.97vw;
+  }
+
+  .meta {
+    padding-top: 5.73vw;
+  }
+
+  .col {
+    padding-top: 1.56vw;
+  }
+
+  .col:not(:first-child) {
+    padding-left: 2.5vw;
+  }
+
+  .col:not(:last-child) {
+    padding-right: 2.5vw;
+  }
+
+  .col.colTight {
+    padding-inline: 1.25vw;
+  }
+
+  .label {
+    font-size: 0.625vw;
+  }
+
+  .value {
+    margin-top: 0.73vw;
+    font-size: 0.78vw;
   }
 }

@@ -18,6 +18,11 @@
   justify-self: start;
 }
 
+/* A hidden bar must not block clicks on the page under its empty band. */
+.header[data-hidden] > .right {
+  pointer-events: none;
+}
+
 .right {
   justify-self: end;
   display: flex;
@@ -46,13 +51,23 @@
   color: var(--c-cream);
 }
 
-.header[data-tone="dark"] .menuPill:hover {
-  background: var(--c-cream);
-  color: var(--c-lacquer);
-}
-
 .header[data-tone="dark"] .round {
   background: var(--c-flame);
+}
+
+/* The cart button is dark-filled; on dark surfaces switch it to cream so it keeps its shape. */
+.header[data-tone="dark"] [data-cart-button] {
+  background: var(--c-cream);
+  color: var(--c-lacquer);
+  box-shadow: 0 0 0 1px rgb(255 248 238 / 0.35);
+}
+
+/* 44px hit area around the 38px cart button, same visual size. */
+.right [data-cart-button]::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
 }
 
 .header[data-condensed] .logo {
@@ -61,7 +76,57 @@
   pointer-events: none;
 }
 
+/* Whole bar slides away while reading down; never while the menu or cart is open (see Header). */
+.left,
+.menuToggle,
+.right [data-cart-button] {
+  transition:
+    transform 0.5s var(--ease-out),
+    opacity 0.35s ease,
+    visibility 0s linear 0s;
+}
+
+.header[data-hidden] :is(.left, .menuToggle, .right [data-cart-button]) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(calc(-100% - var(--pad-y) - 12px));
+  transition:
+    transform 0.5s var(--ease-out),
+    opacity 0.35s ease,
+    visibility 0s linear 0.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .left,
+  .menuToggle,
+  .right [data-cart-button],
+  .header[data-hidden] :is(.left, .menuToggle, .right [data-cart-button]) {
+    transition: none;
+  }
+}
+
+/* One button (one tab stop): the MENU pill and the diamond round. Padding + negative margin
+   give a 44px hit area while the pill and round keep their 38px look. */
+.menuToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: -3px;
+  padding: 3px;
+  border: 0;
+  background: none;
+  color: var(--c-lacquer);
+  border-radius: 999px;
+}
+
+.header[data-tone="dark"] .menuToggle {
+  color: var(--c-cream);
+}
+
 .menuPill {
+  display: grid;
+  place-items: center;
   height: 38px;
   padding: 0 22px;
   border-radius: 999px;
@@ -69,39 +134,48 @@
   font: 600 14px/1 var(--font-text), sans-serif;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--c-lacquer);
+  color: inherit;
   background: transparent;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
 }
 
-.menuPill:hover {
-  background: var(--c-lacquer);
-  color: var(--c-cream);
-}
-
 .round {
   display: grid;
   place-items: center;
+  flex: none;
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 0;
   background: var(--c-red);
   color: var(--c-cream);
   transition: transform 0.4s var(--ease-spring);
 }
 
-.round:hover {
-  transform: scale(1.08) rotate(45deg);
-}
-
+/* The diamond is turned 45deg on every route and size; hover only scales the round. */
 .diamond {
+  display: block;
   width: 7px;
   height: 7px;
   background: currentColor;
   transform: rotate(45deg);
+}
+
+@media (hover: hover) {
+  .menuToggle:hover .menuPill {
+    background: var(--c-lacquer);
+    color: var(--c-cream);
+  }
+
+  .header[data-tone="dark"] .menuToggle:hover .menuPill {
+    background: var(--c-cream);
+    color: var(--c-lacquer);
+  }
+
+  .menuToggle:hover .round {
+    transform: scale(1.08);
+  }
 }
 
 @media (max-width: 640px) {

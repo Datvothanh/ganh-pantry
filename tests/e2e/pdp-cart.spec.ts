@@ -65,7 +65,25 @@ test("quick-add on an other-products card adds that product", async ({
   await expect(page.locator("[data-cart-count]")).toHaveText("1");
 });
 
-test("sticky buy bar shows after the buy block scrolls away and hides near the footer", async ({
+/**
+ * Scroll past the buy block to where the bar has room: the block has left above the viewport and
+ * the other-products heading is clear of the bar (above it, or not yet on screen).
+ */
+const scrollPastBlock = (page: Page) =>
+  page.evaluate(() => {
+    const doc = (s: string) => {
+      const r = document.querySelector(s)!.getBoundingClientRect();
+      return { top: r.top + scrollY, bottom: r.bottom + scrollY };
+    };
+    const block = doc("[data-buy-block]");
+    const head = doc("[data-other-products] h2");
+    const barH = (document.querySelector("[data-sticky-buy]") as HTMLElement).offsetHeight;
+    const y = block.bottom + 10;
+    const clear = head.top - y > innerHeight + 10;
+    window.scrollTo(0, clear ? y : Math.max(y, head.bottom - (innerHeight - barH - 24) + 20));
+  });
+
+test("sticky buy bar shows after the buy block scrolls away and hides over the other-products heading and the footer", async ({
   page,
 }) => {
   await page.goto("/products/mut-gung");
@@ -73,7 +91,7 @@ test("sticky buy bar shows after the buy block scrolls away and hides near the f
   // Scroll only once the page has hydrated: on mount the shell jumps to the top
   // (ScrollTopOnRouteChange), which would undo an earlier scroll under parallel load.
   await expect(page.locator('[data-jar-target][data-hero-ready="true"]')).toHaveCount(1);
-  await page.locator("[data-other-products]").scrollIntoViewIfNeeded();
+  await scrollPastBlock(page);
   await expect(bar(page)).toBeVisible();
   await expect(bar(page).locator("[data-sticky-price]")).toHaveText("$9");
 
@@ -88,7 +106,8 @@ test("sticky buy bar shows after the buy block scrolls away and hides near the f
   );
   await expect(bar(page)).toBeHidden();
   await page.locator('[data-weight="314g"]').click();
-  await page.locator("[data-other-products]").scrollIntoViewIfNeeded();
+  await scrollPastBlock(page);
+  await expect(bar(page)).toBeVisible();
   await expect(bar(page).locator("[data-sticky-price]")).toHaveText("$12");
   await bar(page).locator("[data-add-to-cart]").click();
   await expect(
@@ -96,6 +115,18 @@ test("sticky buy bar shows after the buy block scrolls away and hides near the f
   ).toHaveAttribute("data-variant", "314g");
   await page.keyboard.press("Escape");
 
+  // Past the block, with the heading low on screen where the bar would cover it.
+  const covered = await page.evaluate(() => {
+    const r = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+    const y = Math.max(
+      r("[data-buy-block]").bottom + scrollY + 10,
+      r("[data-other-products] h2").top + scrollY - innerHeight + 40,
+    );
+    window.scrollTo(0, y);
+    return r("[data-other-products] h2").bottom > innerHeight - 120;
+  });
+  expect(covered).toBe(true);
+  await expect(bar(page)).toBeHidden();
   await page.evaluate(() =>
     window.scrollTo(0, document.documentElement.scrollHeight),
   );

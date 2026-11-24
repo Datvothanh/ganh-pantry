@@ -43,6 +43,37 @@ test("menu opens and closes with Escape", async ({ page }) => {
   await expect(menu).toBeHidden();
 });
 
+test("the menu has one tab stop in the header", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("header[data-site-header]")).toHaveAttribute("data-ready", "1");
+  const tabbable = await page
+    .locator('header [aria-controls="site-menu"]')
+    .evaluateAll((els) =>
+      els.filter((el) => (el as HTMLElement).tabIndex >= 0 && !el.closest("[aria-hidden='true']")).length,
+    );
+  expect(tabbable).toBe(1);
+  await expect(page.getByRole("button", { name: /menu/i })).toHaveCount(1);
+});
+
+test("menu is fully open within 600 ms and closes completely", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("header[data-site-header]")).toHaveAttribute("data-ready", "1");
+  const menu = page.locator("[data-site-menu]");
+  await page.locator("[data-menu-toggle]").click();
+  await expect(menu).toBeVisible();
+  await page.waitForTimeout(600);
+  const items = menu.locator('[style*="--i"]');
+  const opacity = await items.last().evaluate((el) => {
+    let o = 1;
+    for (let n: Element | null = el; n; n = n.parentElement) o *= Number(getComputedStyle(n).opacity);
+    return o;
+  });
+  expect(opacity).toBe(1);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(700);
+  await expect(menu).toBeHidden();
+});
+
 test("product routes: known handle 200, unknown 404", async ({ page }) => {
   const ok = await page.goto("/products/mut-gung");
   expect(ok?.status()).toBe(200);

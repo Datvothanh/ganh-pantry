@@ -23,32 +23,63 @@
   text-transform: uppercase;
 }
 
+/* Full-bleed box; the frame inside grows from an inset card (--grow 0) to the
+   full width (--grow 1) as the page scrolls (HeroGrow). No layout shift. */
 .heroMedia {
-  margin-top: clamp(24px, 3vw, 56px);
+  --grow: 0;
+  position: relative;
+  margin: clamp(24px, 3vw, 56px) calc(var(--pad) * -1) 0;
+  aspect-ratio: 1440 / 660;
+}
+
+.heroFrame {
+  position: absolute;
+  inset: 0 calc(var(--pad) * (1 - var(--grow)));
+  overflow: hidden;
+  border-radius: calc(var(--radius) * (1 - var(--grow)));
+  background: var(--c-lacquer);
+  isolation: isolate;
+}
+
+/* Soft shade so the headline reads over any photo. */
+.heroFrame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(60% 50% at 50% 50%, rgb(43 26 20 / 0.32), transparent 100%);
+  pointer-events: none;
+}
+
+.heroImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .heroComp {
-  position: relative;
-  aspect-ratio: 1380 / 620;
-  overflow: hidden;
-  border-radius: var(--radius);
+  position: absolute;
+  inset: 0;
   background: radial-gradient(120% 90% at 50% 100%, #7a2a1d 0%, var(--c-lacquer) 60%);
   isolation: isolate;
 }
 
 .heroLine {
   position: absolute;
-  top: 9%;
+  top: 50%;
   left: 50%;
-  z-index: 1;
+  z-index: 3;
   width: 90%;
   color: var(--c-cream);
   font-family: var(--font-display), serif;
   font-size: clamp(1.8rem, calc(0.8rem + 3.4vw), 6rem);
   line-height: 0.95;
   text-align: center;
+  text-shadow: 0 2px 24px rgb(43 26 20 / 0.35);
   text-transform: uppercase;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .heroLine > span {
@@ -199,7 +230,7 @@
 .aside {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--space-l);
   grid-column: 9 / span 4;
 }
@@ -423,6 +454,10 @@
   white-space: nowrap;
 }
 
+.table .nowrap {
+  white-space: nowrap;
+}
+
 .specName {
   font-family: var(--font-display), serif;
 }
@@ -607,7 +642,7 @@
     grid-column: 1 / -1;
   }
 
-  .heroComp {
+  .heroMedia {
     aspect-ratio: 4 / 5;
   }
 
@@ -660,12 +695,30 @@
     font-size: 13px;
   }
 
+  .table {
+    max-width: 100%;
+  }
+
   .table .specSub {
     display: block;
+  }
+
+  /* Weights stack one per line so the name column keeps its width. */
+  .specWeight {
+    display: block;
+  }
+
+  .specSep {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Static full width. */
+  .heroFrame {
+    --grow: 1;
+  }
+
   .heroJars > img {
     animation: none;
   }

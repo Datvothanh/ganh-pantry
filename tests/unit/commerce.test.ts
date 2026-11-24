@@ -263,15 +263,44 @@ describe("shopify adapter", () => {
 });
 
 describe("Storefront request timeout", () => {
-  it("rejects a request that never answers once the timeout passes", async () => {
-    const hang = vi.fn(
-      (_url: string | URL | Request, init?: RequestInit) =>
-        new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
-        }),
-    );
-    const adapter = createShopifyAdapter({ domain: "x.myshopify.com", token: "t", fetch: hang as typeof fetch, timeoutMs: 50 });
+  /** Answers the first requests with the given bodies, then never answers (until aborted). */
+  const hangAfter = (...answers: unknown[]) =>
+    vi.fn<typeof fetch>((_url, init) => {
+      const body = answers.shift();
+      if (body !== undefined) return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
+      });
+    });
+  const adapterFor = (f: typeof fetch) =>
+    createShopifyAdapter({ domain: "x.myshopify.com", token: "t", fetch: f, timeoutMs: 50 });
+  const add = { handle: "mut-gung", variantId: "220g", quantity: 1 };
+  const product = { data: { product: rawProduct } };
+
+  it("rejects a product or cart read that never answers once the timeout passes", async () => {
+    const adapter = adapterFor(hangAfter());
     await expect(adapter.getProduct("x")).rejects.toThrow();
     await expect(adapter.getCart("c")).rejects.toThrow();
+  }, 2000);
+
+  it("rejects addLine to a new cart when cartCreate never answers", async () => {
+    const f = hangAfter(product);
+    await expect(adapterFor(f).addLine(undefined, add)).rejects.toThrow();
+    expect(f).toHaveBeenCalledTimes(2);
+  }, 2000);
+
+  it("rejects addLine to an existing cart when cartLinesAdd never answers", async () => {
+    const f = hangAfter(product);
+    await expect(adapterFor(f).addLine("c", add)).rejects.toThrow();
+    expect(f).toHaveBeenCalledTimes(2);
+  }, 2000);
+
+  it("rejects addLine when the variant lookup never answers", async () => {
+    await expect(adapterFor(hangAfter()).addLine("c", add)).rejects.toThrow();
+  }, 2000);
+
+  it("rejects updateLine and removeLine that never answer", async () => {
+    await expect(adapterFor(hangAfter()).updateLine("c", "l", 2)).rejects.toThrow();
+    await expect(adapterFor(hangAfter()).removeLine("c", "l")).rejects.toThrow();
   }, 2000);
 });

@@ -2,7 +2,7 @@
   position: relative;
   background: var(--c-lacquer);
   color: var(--c-cream);
-  padding: clamp(56px, 7vw, 150px) var(--pad) 22px;
+  padding: clamp(40px, min(7vw, 6vh), 150px) var(--pad) 22px;
   overflow: hidden;
   font-size: 15px;
   line-height: 1.55;
@@ -21,14 +21,15 @@
 
 .word {
   font-weight: 400;
-  font-size: 23.5vw;
+  /* min(vw, vh) keeps the whole footer within one screen on wide, short viewports. */
+  font-size: min(23.5vw, 27vh);
   letter-spacing: -0.035em;
 }
 
 .tag {
   font-style: italic;
   font-weight: 300;
-  font-size: 8.4vw;
+  font-size: min(8.4vw, 9.6vh);
   letter-spacing: -0.02em;
   line-height: 1;
   margin-top: 0.05em;
@@ -38,7 +39,7 @@
   display: grid;
   grid-template-columns: 25.4vw 16vw minmax(0, 1fr) minmax(0, 1.4fr);
   gap: 32px 0;
-  margin-top: clamp(60px, 9vw, 150px);
+  margin-top: clamp(40px, min(9vw, 7vh), 150px);
   padding-bottom: 36px;
 }
 
@@ -143,10 +144,10 @@
     padding-left: 0;
   }
   .word {
-    font-size: 31vw;
+    font-size: min(31vw, 27vh);
   }
   .tag {
-    font-size: 13vw;
+    font-size: min(13vw, 11vh);
   }
   .grid {
     grid-template-columns: 1fr 1fr;

@@ -40,8 +40,10 @@ Product prices and availability are then read from Shopify, and the cart is a Sh
 hands off to Shopify checkout. Verify a store with
 `node scripts/shopify-smoke.mjs [handle]`.
 
-If a Storefront read fails while rendering, the product falls back to the catalogue price and
-availability in `src/content/products.ts`; the next revalidation (about a minute) retries.
+If a Storefront read fails while rendering, the page keeps the last good cached price and
+availability (a failed revalidation never overwrites it); only without a cached entry (a failed
+build, or a cold cache) does the product fall back to the catalogue price and availability in
+`src/content/products.ts`. The next revalidation (about a minute) retries.
 
 The demo store `ganh-pantry.myshopify.com` is a Shopify development store. Its storefront password
 is `ganh` (shown in the cart drawer next to Checkout); after entering it, click Checkout again.

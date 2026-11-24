@@ -227,7 +227,15 @@ export function createSliderEngine(root: HTMLElement, reduced: boolean): SliderE
   let lastMotion = -1;
 
   const onWheel = (e: WheelEvent) => {
-    if (reduced) return;
+    if (reduced) {
+      // Static row: a vertical wheel scrolls it sideways (the home page itself never scrolls).
+      if (e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const max = wrap.scrollWidth - wrap.clientWidth;
+      if (max <= 0) return;
+      e.preventDefault();
+      wrap.scrollLeft = Math.max(0, Math.min(max, wrap.scrollLeft - wheelDelta(e, window.innerHeight)));
+      return;
+    }
     e.preventDefault();
     target += wheelDelta(e, window.innerHeight);
   };
@@ -242,7 +250,9 @@ export function createSliderEngine(root: HTMLElement, reduced: boolean): SliderE
   let dragV = 0;
 
   const onDown = (e: PointerEvent) => {
-    if (reduced || (e.pointerType === "mouse" && e.button !== 0)) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Touch already scrolls the static row natively.
+    if (reduced && e.pointerType === "touch") return;
     down = true;
     pointerId = e.pointerId;
     dragging = false;
@@ -271,7 +281,8 @@ export function createSliderEngine(root: HTMLElement, reduced: boolean): SliderE
     dragV = smoothDragVelocity(dragV, dx, t - lastT);
     lastX = e.clientX;
     lastT = t;
-    target += dx * SLIDER.dragFactor;
+    if (reduced) wrap.scrollLeft -= dx;
+    else target += dx * SLIDER.dragFactor;
   };
   const onUp = (e: PointerEvent) => {
     if (pointerId !== -1 && e.pointerId !== pointerId) return;
@@ -279,7 +290,7 @@ export function createSliderEngine(root: HTMLElement, reduced: boolean): SliderE
       try {
         wrap.releasePointerCapture(e.pointerId);
       } catch {}
-      target += flingDistance(dragV);
+      if (!reduced) target += flingDistance(dragV);
     }
     dragV = 0;
     down = false;

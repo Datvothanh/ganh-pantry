@@ -12,13 +12,14 @@ export function BackShape() {
   );
 }
 
-const R = 430;
+/** Baseline radius in the 1000-unit badge box; glyphs grow outward to at most ~R + 1.1em <= 460. */
+const R = 360;
 const CIRC = 2 * Math.PI * R;
 
 /** Circular text badge on a textPath; rotation follows the marquee via `--jar-circle-rotation`. */
 export function Badge({ text }: { text: string }) {
   // Size the glyphs so the phrase wraps the circle exactly once.
-  const fontSize = Math.min(118, CIRC / (text.length * 0.64));
+  const fontSize = Math.min(90, CIRC / (text.length * 0.64));
   return (
     <div className={styles.badge} aria-hidden="true" data-hero-badge="">
       <svg viewBox="0 0 1000 1000" className={styles.badgeSvg}>

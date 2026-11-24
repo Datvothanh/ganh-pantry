@@ -5,28 +5,34 @@ import { useEffect, type CSSProperties } from "react";
 import { addToCart, openCart } from "@/components/cart/store";
 import { useCursorLabel } from "@/components/cursor";
 import { MotifSvg } from "@/components/motifs";
-import type { OtherCard } from "@/components/product/OtherProducts";
+import type { Locale } from "@/content/products";
+import { QuickAddMeta, quickAddLabel, type OtherCard } from "@/components/product/OtherProducts";
 // Same card look as the PDP "other products" row (tile, motif pops, quick-add).
 import card from "@/components/product/OtherProducts.module.css";
 import styles from "./Pantry.module.css";
 
-/** Motif pops behind the jar on hover: position (% of tile), size, rotation, stagger. */
+/**
+ * Motif pops behind the jar on hover: position (% of tile), size, rotation, stagger.
+ * All kept in the upper part of the tile so no pop reaches the caption (down to 390px).
+ */
 const POPS = [
-  { x: 24, y: 26, s: 0.95, r: -18, d: 0 },
-  { x: 78, y: 20, s: 0.7, r: 24, d: 0.05 },
-  { x: 84, y: 62, s: 0.9, r: -32, d: 0.1 },
-  { x: 16, y: 70, s: 0.75, r: 40, d: 0.08 },
-  { x: 52, y: 88, s: 0.6, r: 12, d: 0.14 },
-  { x: 50, y: 10, s: 0.5, r: -50, d: 0.12 },
+  { x: 24, y: 22, s: 0.9, r: -18, d: 0 },
+  { x: 78, y: 16, s: 0.7, r: 24, d: 0.05 },
+  { x: 84, y: 44, s: 0.7, r: -32, d: 0.1 },
+  { x: 16, y: 42, s: 0.7, r: 40, d: 0.08 },
+  { x: 50, y: 30, s: 0.55, r: 12, d: 0.14 },
+  { x: 50, y: 8, s: 0.5, r: -50, d: 0.12 },
 ];
 
 /** Category grid of product cards with motif hover and quick-add. */
 export function PantryGrid({
   cards,
   discover,
+  locale = "en",
 }: {
   cards: OtherCard[];
   discover: string;
+  locale?: Locale;
 }) {
   const cursor = useCursorLabel();
   useEffect(() => cursor.hide, [cursor.hide]);
@@ -88,7 +94,7 @@ export function PantryGrid({
               type="button"
               className={card.quick}
               data-quick-add={c.handle}
-              aria-label={c.quickAdd.label}
+              aria-label={quickAddLabel(locale, c.name, c.quickAdd)}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -107,6 +113,7 @@ export function PantryGrid({
               </span>
               <span className={card.sub}>{c.sub}</span>
             </Link>
+            {c.quickAdd ? <QuickAddMeta quickAdd={c.quickAdd} /> : null}
           </div>
         </div>
       ))}

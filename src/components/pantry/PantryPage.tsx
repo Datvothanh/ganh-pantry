@@ -12,12 +12,13 @@ import {
 } from "@/content/products";
 import { MotifSvg } from "@/components/motifs";
 import type { OtherCard } from "@/components/product/OtherProducts";
-import { RevealText } from "@/components/product/RevealText";
 import { buyCopy } from "@/components/product/buy";
+import { RevealText } from "@/components/product/RevealText";
 import { getLiveProduct } from "@/lib/commerce/live";
 import { quickAddTarget } from "@/lib/commerce/variants";
 import { href } from "@/lib/i18n";
 import styles from "./Pantry.module.css";
+import { HeroGrow } from "./HeroGrow";
 import { PantryGrid } from "./PantryGrid";
 import { PantryNav } from "./PantryNav";
 import { Reveal } from "./Reveal";
@@ -129,12 +130,12 @@ function Media({ src, alt, ratio }: { src: string; alt: string; ratio?: string }
 function Weights({ list, t, center }: { list: Product[]; t: PantryStrings; center?: boolean }) {
   const weights = [...new Set(list.flatMap((p) => p.variants.map((v) => v.weight)))];
   return (
-    <div className={center ? styles.weightsCenter : undefined}>
+    <div className={center ? styles.weightsCenter : undefined} data-pantry-weights="">
       <p className={styles.weightsLabel}>{t.weights}</p>
       <ul className={styles.weights}>
         {weights.map((w) => (
           <li key={w} className={styles.weight}>
-            {w.replace(" ", "")}
+            {w}
           </li>
         ))}
       </ul>
@@ -145,7 +146,6 @@ function Weights({ list, t, center }: { list: Product[]; t: PantryStrings; cente
 export async function PantryPage({ locale }: { locale: Locale }) {
   const t = pantryStrings[locale];
   const dict = getDict(locale);
-  const quickAdd = buyCopy[locale].quickAdd;
   // Quick-add takes the first weight that can be bought (cached commerce reads).
   const live = await Promise.all(products.map((p) => getLiveProduct(p.handle)));
   const quickTarget = new Map(products.map((p, i) => [p.handle, quickAddTarget(p, live[i])]));
@@ -163,7 +163,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
         card: p.colors.card,
         accent: p.colors.accent,
         motif: p.motif,
-        quickAdd: target ? { ...target, label: quickAdd(p.nameVi) } : undefined,
+        quickAdd: target ? { ...target, label: buyCopy[locale].quickAdd(p.nameVi) } : undefined,
       };
     });
 
@@ -182,15 +182,19 @@ export async function PantryPage({ locale }: { locale: Locale }) {
     <main className={styles.page} data-pantry="">
       <header className={styles.hero}>
         <h1 className={styles.heroTitle}>{t.title}</h1>
-        <div className={styles.heroMedia}>
+        <HeroGrow>
           {heroPhoto ? (
-            <Media src={heroPhoto} alt={t.heroAlt} />
+            // eslint-disable-next-line @next/next/no-img-element -- optional local photo
+            <img
+              src={heroPhoto}
+              alt={t.heroAlt}
+              className={styles.heroImg}
+              loading="eager"
+              fetchPriority="high"
+            />
           ) : (
             <div className={styles.heroComp} role="img" aria-label={t.heroAlt}>
               <Scattered items={heroScatter} />
-              <p className={styles.heroLine} aria-hidden="true">
-                <span>{t.heroLine[0]}</span> <span>{t.heroLine[1]}</span>
-              </p>
               <div className={styles.heroJars}>
                 {products.map((p, i) => (
                   <Jar
@@ -203,7 +207,10 @@ export async function PantryPage({ locale }: { locale: Locale }) {
               </div>
             </div>
           )}
-        </div>
+          <p className={styles.heroLine} data-pantry-hero-line="">
+            <span>{t.heroLine[0]}</span> <span>{t.heroLine[1]}</span>
+          </p>
+        </HeroGrow>
       </header>
 
       <section className={styles.intro}>
@@ -215,7 +222,9 @@ export async function PantryPage({ locale }: { locale: Locale }) {
       {categories.map((c, index) => {
         const list = byCategory(c.id);
         const name = c.name[locale];
-        const sectionPhoto = photo(`pantry-${c.id}`);
+        // Feature panel: the lead jar's lifestyle photo.
+        const lead = list[0]?.handle;
+        const sectionPhoto = lead ? photo(`${lead}/00-${lead}-jar-1`) : null;
 
         if (c.id === "sauces") {
           const [big, ...rest] = list;
@@ -254,7 +263,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                 <RevealText className={styles.text} text={c.intro[locale]} />
                 <Weights list={list} t={t} center />
               </div>
-              <PantryGrid cards={cardsFor(list)} discover={dict.cursor.discover} />
+              <PantryGrid cards={cardsFor(list)} discover={dict.cursor.discover} locale={locale} />
             </section>
           );
         }
@@ -272,7 +281,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
               {name}
             </h2>
             <div className={`${styles.body} ${asideFirst ? styles.asideFirst : ""}`}>
-              <div className={styles.media}>
+              <div className={styles.media} data-pantry-feature="">
                 {sectionPhoto ? (
                   <Media src={sectionPhoto} alt={t.categoryAlt(name)} ratio="875 / 631" />
                 ) : (
@@ -284,12 +293,12 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                 <Weights list={list} t={t} />
               </div>
             </div>
-            <PantryGrid cards={cardsFor(list)} discover={dict.cursor.discover} />
+            <PantryGrid cards={cardsFor(list)} discover={dict.cursor.discover} locale={locale} />
           </section>
         );
       })}
 
-      <section className={styles.specs} aria-labelledby="pantry-specs">
+      <section className={styles.specs} aria-labelledby="pantry-specs" data-pantry-end="">
         <h2 id="pantry-specs" className={styles.title}>
           <span>{t.tableTitle[0]}</span> <span>{t.tableTitle[1]}</span>
         </h2>
@@ -315,9 +324,16 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                     {locale === "en" ? p.nameEn : p.subtitle.vi}
                   </span>
                 </td>
-                <td>{t.months(p.shelfLife)}</td>
+                <td className={styles.nowrap} data-spec-shelf="">
+                  {t.months(p.shelfLife)}
+                </td>
                 <td className={styles.right}>
-                  {p.variants.map((v) => v.weight.replace(" ", "")).join(" · ")}
+                  {p.variants.map((v, i) => (
+                    <span key={v.id} className={styles.specWeight}>
+                      {i ? <span className={styles.specSep}> · </span> : null}
+                      {v.weight}
+                    </span>
+                  ))}
                 </td>
               </tr>
             ))}
@@ -325,7 +341,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
         </table>
       </section>
 
-      <Reveal className={styles.outro} data-pantry-end="">
+      <Reveal className={styles.outro} data-pantry-outro="">
         {outroPhoto ? (
           <div className={styles.outroCover}>
             {/* eslint-disable-next-line @next/next/no-img-element -- optional local photo */}

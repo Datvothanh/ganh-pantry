@@ -41,10 +41,12 @@ describe("live variants", () => {
   it("quick-add targets the first available variant with its live price", () => {
     expect(quickAddTarget(gung, live([["220g", 13.5, false], ["314g", 16.5, true]]))).toEqual({
       variantId: "314g",
+      weight: "314 g",
       price: { amount: 16.5, currencyCode: "USD" },
     });
     expect(quickAddTarget(gung, null)).toEqual({
       variantId: "220g",
+      weight: "220 g",
       price: { amount: 9, currencyCode: "USD" },
     });
     expect(quickAddTarget(gung, live([["220g", 13.5, false], ["314g", 16.5, false]]))).toBeUndefined();

@@ -13,7 +13,7 @@
 }
 
 .menu[data-state="open"] {
-  animation: curtainIn 0.85s var(--ease-out) both;
+  animation: curtainIn 0.6s var(--ease-out) both;
 }
 
 .menu[data-state="closing"] {
@@ -34,7 +34,9 @@
     clip-path: inset(0 0 0 0 round 0);
   }
   to {
-    clip-path: inset(0 0 100% 0 round 0 0 40vw 40vw);
+    /* Past 100% plus hidden: no subpixel strip lingers at the top once closed. */
+    clip-path: inset(0 0 calc(100% + 2px) 0 round 0 0 40vw 40vw);
+    visibility: hidden;
   }
 }
 
@@ -146,8 +148,8 @@
 }
 
 .menu[data-state="open"] .big {
-  animation: rise 0.9s var(--ease-out) both;
-  animation-delay: calc(0.25s + var(--i) * 0.08s);
+  animation: rise 0.45s var(--ease-out) both;
+  animation-delay: calc(0.08s + var(--i) * 0.04s);
 }
 
 .products {
@@ -157,8 +159,8 @@
 }
 
 .menu[data-state="open"] .group {
-  animation: fadeUp 0.8s var(--ease-out) both;
-  animation-delay: calc(0.3s + var(--i) * 0.07s);
+  animation: fadeUp 0.4s var(--ease-out) both;
+  animation-delay: calc(0.08s + var(--i) * 0.035s);
 }
 
 .groupTitle {
@@ -245,6 +247,9 @@
   from {
     opacity: 0;
     transform: translateY(24px);
+  }
+  60% {
+    opacity: 1;
   }
   to {
     opacity: 1;

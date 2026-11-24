@@ -160,9 +160,10 @@ export function itemBrightness(x: number, vw: number): number {
   return SLIDER.brightEdge + bulge(x / vw) * (SLIDER.brightCentre - SLIDER.brightEdge);
 }
 
+/** Depth blur plus motion blur `extra`; the motion blur fades out toward the centre jar so its label stays sharp. */
 export function itemBlur(x: number, l: SliderLayout, extra = 0): number {
   const d = centreDistance(x, l);
-  return Math.min(l.phone ? SLIDER.blurMaxPhone : SLIDER.blurMax, d * d) + extra;
+  return Math.min(l.phone ? SLIDER.blurMaxPhone : SLIDER.blurMax, d * d) + extra * Math.min(1, d * d);
 }
 
 /** Per-index tilt in degrees; drifts as the marquee moves. */
