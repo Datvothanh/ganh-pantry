@@ -180,12 +180,12 @@
     background-color 0.3s ease;
 }
 
-/* >= 44px hit area in every state: the button scales to 0.6 while hidden on hover devices,
-   so the ring reaches 74px unscaled (44px at 0.6). */
+/* The 44px button is its own hit area; only the scaled-down (0.6) hidden state on hover
+   devices widens it with a ring (74px unscaled = 44px at 0.6). */
 .quick::after {
   content: "";
   position: absolute;
-  inset: -15px;
+  inset: 0;
   border-radius: 50%;
 }
 
@@ -197,6 +197,15 @@
   .quick {
     opacity: 0;
     transform: scale(0.6);
+  }
+
+  .quick::after {
+    inset: -15px;
+  }
+
+  .card:hover .quick::after,
+  .quick:focus-visible::after {
+    inset: 0;
   }
 
   .card:hover .quick,
@@ -240,10 +249,10 @@
   }
 }
 
-/* Small cards: the caption (name, sub, weight and price) takes a large, variable share of the
+/* Small cards (phones and tablet three-column grids): the caption (name, sub, weight and price) takes a large, variable share of the
    tile, so the jar sits in flow above it and shrinks to the room left; it never runs under the
    text. Still centred with left/translate so the hover transform is unchanged. */
-@media (max-width: 640px) {
+@media (max-width: 820px) {
   .card {
     display: grid;
     grid-template: minmax(0, 1fr) auto / 100%;

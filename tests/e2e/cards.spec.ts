@@ -178,11 +178,13 @@ for (const path of ["/products/mut-gung", "/pantry"]) {
 
 // ---------- QA ledger Q2-2, Q2-12 ----------
 
-/** Q2-2: on mobile two-column grids the jar image ends above the card's name and sub line. */
+/** Q2-2: on small grids (two columns on phones, three on tablets) the jar image ends above the card's name and sub line. */
 for (const { width, height } of [
   { width: 360, height: 740 },
   { width: 390, height: 844 },
   { width: 430, height: 932 },
+  { width: 700, height: 1000 },
+  { width: 768, height: 1024 },
 ]) {
   for (const prefix of ["", "/vi"]) {
     test(`pantry jar images stay above the name and sub at ${width}px (${prefix || "/en"})`, async ({ page }) => {
@@ -264,3 +266,29 @@ for (const path of ["/pantry", "/products/mut-gung"]) {
     });
   }
 }
+
+/** Q2-12: where the button is already full size (touch, no hover), its hit area is not widened past it. */
+test.describe("quick-add on touch", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  for (const path of ["/pantry", "/products/mut-gung"]) {
+    test(`a tap 30px from the quick-add centre does not hit it on ${path}`, async ({ page }) => {
+      await page.goto(path);
+      const button = cardsOn(page, path).first().locator("button[data-quick-add]");
+      await button.evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" }));
+      await page.waitForTimeout(150);
+      const hits = await button.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        return [
+          [cx - 30, cy],
+          [cx, cy + 30],
+        ].map(([x, y]) => {
+          const hit = document.elementFromPoint(x, y);
+          return !!hit && (hit === el || el.contains(hit));
+        });
+      });
+      expect(hits).toEqual([false, false]);
+    });
+  }
+});

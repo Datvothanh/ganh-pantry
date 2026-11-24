@@ -7,6 +7,7 @@
   --c-gold: #d9a441;
   /* derived */
   --c-flame: #e8512a; /* red-orange display type on lacquer */
+  --c-flame-light: #ff7a4d; /* small flame text on lacquer (>= 4.5:1) */
   --c-cream: #fff8ee;
 
   --pad: clamp(16px, 2.1vw, 40px);

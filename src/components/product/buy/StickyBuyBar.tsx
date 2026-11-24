@@ -62,7 +62,15 @@ export function StickyBuyBar() {
       document.querySelectorAll(sel).forEach((el) => io.observe(el));
     }
     ro.observe(document.body);
+    // Publish the bar's real height so the text columns reserve enough room under them.
+    const root = document.documentElement;
+    const barRo = new ResizeObserver(() => {
+      if (bar.current) root.style.setProperty("--sticky-bar-h", `${bar.current.offsetHeight}px`);
+    });
+    if (bar.current) barRo.observe(bar.current);
     return () => {
+      barRo.disconnect();
+      root.style.removeProperty("--sticky-bar-h");
       io.disconnect();
       ro.disconnect();
       cancelAnimationFrame(raf);

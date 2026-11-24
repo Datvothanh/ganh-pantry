@@ -17,7 +17,7 @@
    * the sticky buy bar, so once a column has scrolled fully into view the bar sits over that space,
    * not over its last lines.
    */
-  --sticky-bar-space: max(112px, 5vw);
+  --sticky-bar-space: max(112px, 5vw, calc(var(--sticky-bar-h, 0px) + 24px));
   /*
    * Space the hero jar needs below the stage, reserved in CSS with the same formula as
    * ProductHero's layout() (end pose after the scrub, the same for any title: jar centre +

@@ -138,9 +138,6 @@
   text-transform: uppercase;
   color: inherit;
   background: var(--c-cream);
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
 }
 
 .round {
