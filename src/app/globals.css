@@ -28,6 +28,13 @@
   }
 }
 
+/* The strip's credit wraps to two short lines on tablets. */
+@media (min-width: 721px) and (max-width: 1000px) {
+  :root {
+    --footer-strip-h: 50px;
+  }
+}
+
 *,
 *::before,
 *::after {

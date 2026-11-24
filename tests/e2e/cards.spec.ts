@@ -46,9 +46,12 @@ for (const path of ["/products/mut-gung", "/pantry"]) {
     await expect(page.locator("[data-cart-root]")).toHaveAttribute("data-state", "open");
     await page.locator("[data-cart-drawer] header button").click();
     await expect(page.locator("[data-cart-root]")).toHaveAttribute("data-state", "closed");
-    await page.mouse.move(5, 5);
-    await page.waitForTimeout(1000);
-    expect(await motifOpacity(card)).toBe(0);
+    // Clicking may scroll the track; park the pointer outside the card, wait until it is not hovered.
+    const box = (await card.boundingBox())!;
+    const vp = page.viewportSize()!;
+    await page.mouse.move(box.x > vp.width / 2 ? 5 : vp.width - 5, box.y > vp.height / 2 ? 5 : vp.height - 5);
+    await expect.poll(() => card.evaluate((el) => el.matches(":hover"))).toBe(false);
+    await expect.poll(() => motifOpacity(card)).toBe(0);
   });
 
   test(`keyboard focus on a card link pops its motifs on ${path}`, async ({ page }) => {

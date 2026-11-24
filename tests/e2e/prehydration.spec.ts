@@ -242,6 +242,18 @@ for (const viewport of [
   });
 }
 
+for (const width of [760, 860, 960]) {
+  for (const path of ["/", "/vi"]) {
+    test(`static row ends above the strip at ${width}px on ${path}`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      await expect(page.locator("[data-jar-slider]")).toHaveAttribute("data-jar-slider-ready", "true");
+      await expectRowAboveStrip(page);
+    });
+  }
+}
+
 test.describe("hydration", () => {
   for (const viewport of [
     { width: 1440, height: 900 },

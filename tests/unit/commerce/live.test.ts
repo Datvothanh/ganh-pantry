@@ -15,12 +15,12 @@ describe("getLiveProduct", () => {
     expect(await getLiveProduct("mut-gung")).toBe(p);
   });
 
-  it("lets the fetch error escape the cached function (so it is never cached) and falls back to null outside it", async () => {
-    const { getLiveProduct, fetchLiveProduct } = await import("@/lib/commerce/live");
+  it("falls back to null inside the cached function, so a failed read never fails a prerender", async () => {
+    const live = await import("@/lib/commerce/live");
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     getProduct.mockRejectedValue(new Error("boom"));
-    await expect(fetchLiveProduct("mut-gung")).rejects.toThrow("boom");
-    expect(await getLiveProduct("mut-gung")).toBeNull();
+    expect(await live.getLiveProduct("mut-gung")).toBeNull();
+    expect(Object.keys(live).sort()).toEqual(["getLiveProduct"]);
     spy.mockRestore();
   });
 });

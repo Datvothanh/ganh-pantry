@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mock": "node scripts/mock-env.mjs next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
@@ -12,8 +13,8 @@
     "e2e": "playwright test",
     "labels": "node scripts/labels/generate.mjs",
     "composites": "node scripts/composites.mjs",
-    "check": "npm run lint && npm run typecheck && npm test && npm run build",
-    "check:lane": "npm run lint && npm run typecheck && npm test && next build --webpack",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build:mock",
+    "check:lane": "npm run lint && npm run typecheck && npm test && node scripts/mock-env.mjs next build --webpack",
     "check:shopify": "node scripts/check-shopify-build.mjs"
   },
   "dependencies": {

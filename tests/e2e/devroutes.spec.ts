@@ -32,6 +32,7 @@ test("next start without GANH_DEV_ROUTES returns 404 for the dev routes", async 
   const port = await freePort();
   const env: NodeJS.ProcessEnv = { ...process.env };
   delete env.GANH_DEV_ROUTES;
+  env.GANH_COMMERCE = "mock";
   const server = spawn(`npx next start -p ${port}`, { env, shell: true, stdio: "ignore" });
   let exited = false;
   server.once("exit", () => {

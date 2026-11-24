@@ -11,6 +11,7 @@ import { site } from "@/content/site";
 import { formatMoney } from "@/lib/commerce/format";
 import { MAX_LINE_QUANTITY, type CartLine } from "@/lib/commerce/types";
 import { href } from "@/lib/i18n";
+import { isExternalCheckout } from "./checkout";
 import { cartCopy } from "./copy";
 import { closeCart, removeLine, setLineQuantity, useCart } from "./store";
 import styles from "./Cart.module.css";
@@ -86,7 +87,7 @@ export function CartDrawer() {
 
   const lines = cart?.lines ?? [];
   const checkoutUrl = cart?.checkoutUrl ?? "/checkout-demo";
-  const internal = checkoutUrl.startsWith("/");
+  const internal = !isExternalCheckout(checkoutUrl);
   const alert = error ? (
     <p className={styles.error} role="alert" data-cart-error>
       {t.error}

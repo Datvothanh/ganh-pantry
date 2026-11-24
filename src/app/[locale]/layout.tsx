@@ -9,6 +9,7 @@ import { Header } from "@/components/header/Header";
 import { INTRO_BOOT_SCRIPT } from "@/components/loader/boot";
 import { Shell } from "@/components/shell/Shell";
 import { getDict } from "@/content/dict";
+import { commerce } from "@/lib/commerce";
 import { href, isLocale, locales } from "@/lib/i18n";
 import { display, text } from "../fonts";
 import "../globals.css";
@@ -42,6 +43,8 @@ export default async function LocaleLayout({ children, params }: Props) {
     <html lang={locale} className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
+        {/* Adapter the page was rendered with; the e2e global setup refuses anything but "mock". */}
+        <meta name="ganh-commerce" content={commerce.kind} />
       </head>
       <body>
         <Shell locale={locale}>

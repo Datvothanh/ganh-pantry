@@ -36,6 +36,8 @@ test("add, change quantity, remove and check out", async ({ page }) => {
   await expect(second).toContainText("314 g");
   await expect(first.locator("img")).toHaveAttribute("src", /\/products\/mut-gung\.webp/);
   await expect(drawer(page).locator("[data-cart-subtotal]")).toHaveText("$22");
+  // The demo checkout is in-site, so the Shopify store-password note stays hidden.
+  await expect(drawer(page).locator("[data-cart-store-password]")).toHaveCount(0);
 
   // Quantity stepper updates the subtotal ($9 × 2 + $13).
   await first.locator("[data-cart-increase]").click();

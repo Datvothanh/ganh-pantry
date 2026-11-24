@@ -18,10 +18,11 @@ npm run dev                  # http://localhost:3000
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Next.js dev server. |
-| `npm run check` | Lint, typecheck, unit tests, then `next build` (Turbopack). |
-| `npm run check:lane` | Same checks with `next build --webpack`. Use this one in lanes and CI-like runs. |
+| `npm run check` | Lint, typecheck, unit tests, then `npm run build:mock` (Turbopack, mock commerce). |
+| `npm run check:lane` | Same checks with a mock `next build --webpack`. Use this one in lanes and CI-like runs. |
+| `npm run build:mock` | `next build` with `GANH_COMMERCE=mock`, whatever the Shopify env says. |
 | `npm run check:shopify` | Builds and starts the site against a local fake Storefront API and asserts that a product page shows the Shopify price. |
-| `npm run e2e` | Playwright tests (`tests/e2e`). Needs a production build first (`npm run build`); the config starts `next start` with `GANH_DEV_ROUTES=1`. Set `E2E_PORT` to change the port (default 3100). |
+| `npm run e2e` | Playwright tests (`tests/e2e`). Needs a mock production build first (`npm run build:mock`, or `npm run check`); the global setup refuses a build rendered with real Shopify data. The config starts `next start` with `GANH_DEV_ROUTES=1` and `GANH_COMMERCE=mock`. Set `E2E_PORT` to change the port (default 3100). |
 | `npm run labels` | Renders jar labels to `public/labels/<handle>.png` and motifs to `public/motifs/`. |
 | `npm run composites` | Renders `public/products/<handle>.webp` (jar photo plus label) through the dev route `/dev/composite.html`. Uses `sharp`. |
 | `python scripts/photos.py <stage_dir>` (photos) | Builds `public/photos/<handle>/` from staged photos plus a studio packshot. |
@@ -33,10 +34,18 @@ The site talks to the Shopify Storefront API when both of these are set (see `.e
 - `SHOPIFY_STORE_DOMAIN`: for example `my-shop.myshopify.com`
 - `SHOPIFY_STOREFRONT_TOKEN`: Storefront API access token
 - `SHOPIFY_API_VERSION`: optional, defaults to `2026-10`
+- `GANH_COMMERCE=mock`: optional, forces the mock catalogue and cart even when the two above are set
 
 Product prices and availability are then read from Shopify, and the cart is a Shopify cart that
 hands off to Shopify checkout. Verify a store with
 `node scripts/shopify-smoke.mjs [handle]`.
+
+If a Storefront read fails while rendering, the product falls back to the catalogue price and
+availability in `src/content/products.ts`; the next revalidation (about a minute) retries.
+
+The demo store `ganh-pantry.myshopify.com` is a Shopify development store. Its storefront password
+is `ganh` (shown in the cart drawer next to Checkout); after entering it, click Checkout again.
+Payments run in test mode.
 
 If either of the first two variables is missing, the site uses the mock adapter: products and prices
 from `src/content/products.ts` and an in-memory cart. Everything works without any account, which is

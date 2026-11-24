@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Builds and serves the site against the local fake Storefront (scripts/fake-storefront.mjs)
 // to prove that a Shopify-connected build prerenders under Cache Components and that the
-// PDP shows live prices and availability.
+// PDP shows live prices and availability. A second build against a Storefront that answers 500
+// must still succeed and fall back to the catalogue prices.
 //
 // The build runs in a temporary copy of the project (node_modules linked), so the main
 // `.next` is never touched. Everything is cleaned up at the end.
 
 import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:http";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -22,7 +24,7 @@ const log = (msg) => console.log(`[check:shopify] ${msg}`);
 function copyProject() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ganh-shopify-"));
   for (const entry of fs.readdirSync(root)) {
-    if (SKIP.has(entry)) continue;
+    if (SKIP.has(entry) || (entry.startsWith(".env") && entry !== ".env.example")) continue;
     fs.cpSync(path.join(root, entry), path.join(dir, entry), { recursive: true });
   }
   fs.symlinkSync(path.join(root, "node_modules"), path.join(dir, "node_modules"), "junction");
@@ -88,36 +90,73 @@ async function assertPdp(base) {
   log(`PDP shows ${available.id} at ${usd(available.price + PRICE_BUMP)}; ${SOLD_OUT[1]} sold out`);
 }
 
-const fake = await startFakeStorefront();
-log(`fake storefront on ${fake.url}`);
-const dir = copyProject();
-log(`building a copy in ${dir}`);
-const env = {
-  ...process.env,
-  SHOPIFY_STORE_DOMAIN: fake.url,
-  SHOPIFY_STOREFRONT_TOKEN: "fake-token",
-  NEXT_TELEMETRY_DISABLED: "1",
-};
+async function assertCatalogueFallback(base) {
+  const { products } = await import(new URL("../src/content/products.ts", import.meta.url).href);
+  const quat = products.find((p) => p.handle === "mut-quat");
+  const first = quat.variants[0];
+  const res = await fetch(`${base}/products/${quat.handle}`);
+  if (!res.ok) throw new Error(`PDP responded ${res.status} with a failing Storefront`);
+  const html = await res.text();
+  // formatMoney drops ".00" from whole amounts.
+  const price = new RegExp(`data-buy-price="" data-variant="${first.id}">\\$${first.price}(\\.00)?<`);
+  if (!price.test(html)) {
+    throw new Error("PDP does not fall back to the catalogue price when the Storefront fails");
+  }
+  log(`failing Storefront: build ok, PDP falls back to ${first.id} at ${usd(first.price)}`);
+}
+
+/** Answers every request with HTTP 500, like a Storefront outage. */
+function startBrokenStorefront() {
+  return new Promise((resolve) => {
+    const server = createServer((_req, res) => {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end('{"errors":[{"message":"outage"}]}');
+    });
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address();
+      resolve({ url: `http://127.0.0.1:${port}`, close: () => new Promise((r) => server.close(r)) });
+    });
+  });
+}
+
 const nextBin = path.join(root, "node_modules", "next", "dist", "bin", "next");
-let server;
+
+/** Builds a fresh copy against `storefront`, serves it, runs `assert(base)`, cleans up. */
+async function buildAndAssert(storefront, assert) {
+  const dir = copyProject();
+  log(`building a copy in ${dir} against ${storefront.url}`);
+  const env = {
+    ...process.env,
+    SHOPIFY_STORE_DOMAIN: storefront.url,
+    SHOPIFY_STOREFRONT_TOKEN: "fake-token",
+    GANH_COMMERCE: "",
+    NEXT_TELEMETRY_DISABLED: "1",
+  };
+  let server;
+  try {
+    await run(process.execPath, [nextBin, "build", "--webpack"], { cwd: dir, env });
+    server = spawn(process.execPath, [nextBin, "start", "-p", String(PORT)], { cwd: dir, env, stdio: "inherit" });
+    const base = `http://127.0.0.1:${PORT}`;
+    await waitFor(base, server);
+    await assert(base);
+  } finally {
+    killTree(server);
+    await storefront.close();
+    try {
+      removeProject(dir);
+    } catch (err) {
+      console.warn(`[check:shopify] could not remove ${dir}: ${err}`);
+    }
+  }
+}
+
 let failed = false;
 try {
-  await run(process.execPath, [nextBin, "build", "--webpack"], { cwd: dir, env });
-  server = spawn(process.execPath, [nextBin, "start", "-p", String(PORT)], { cwd: dir, env, stdio: "inherit" });
-  const base = `http://127.0.0.1:${PORT}`;
-  await waitFor(base, server);
-  await assertPdp(base);
+  await buildAndAssert(await startFakeStorefront(), assertPdp);
+  await buildAndAssert(await startBrokenStorefront(), assertCatalogueFallback);
   log("ok");
 } catch (err) {
   failed = true;
   console.error(`[check:shopify] FAILED: ${err instanceof Error ? err.message : err}`);
-} finally {
-  killTree(server);
-  await fake.close();
-  try {
-    removeProject(dir);
-  } catch (err) {
-    console.warn(`[check:shopify] could not remove ${dir}: ${err}`);
-  }
 }
 process.exit(failed ? 1 : 0);
