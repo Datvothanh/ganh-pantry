@@ -41,13 +41,13 @@
   isolation: isolate;
 }
 
-/* Soft shade so the headline reads over any photo. */
+/* Soft shade so the headline reads over any photo (the hero photo keeps its upper part clear). */
 .heroFrame::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: radial-gradient(60% 50% at 50% 50%, rgb(43 26 20 / 0.32), transparent 100%);
+  background: radial-gradient(60% 45% at 50% 27%, rgb(43 26 20 / 0.34), transparent 100%);
   pointer-events: none;
 }
 
@@ -68,7 +68,7 @@
 
 .heroLine {
   position: absolute;
-  top: 50%;
+  top: 27%;
   left: 50%;
   z-index: 3;
   width: 90%;
