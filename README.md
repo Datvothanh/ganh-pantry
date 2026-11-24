@@ -1,9 +1,50 @@
-# Ganh
+# GÁNH — Vietnamese Pantry
 
-Ganh is a small storefront for Vietnamese jams and preserves, built with Next.js (App Router, Cache
-Components) in English and Vietnamese. It has a 3D hero, product pages with a buy bar, and a cart
-drawer. Products and the cart come from a commerce adapter: Shopify when configured, a local mock
-otherwise.
+A concept storefront for a fictional Vietnamese pantry brand: candied fruit, chili sauces, pickles
+and honey, sold one jar at a time. It is a portfolio piece built to show high-end motion design and a
+real headless commerce flow in the same site.
+
+> Concept project, not a real brand. Design & development by Eric. Motion inspired by
+> [Agrumea Farm](https://agrumeafarm.it) by Studio K95 (Awwwards Site of the Day). All code, brand,
+> copy, labels and images here are original; no code or asset from the reference is used.
+
+**Live demo:** see the repository's website link. Checkout runs on a Shopify development store
+(storefront password `ganh`, test payments only).
+
+## What it shows
+
+- **Jar slider home.** One screen, an endless marquee of jars driven by wheel and drag, eased on a
+  curved path with blur and scale by distance from the centre, spring-based pointer lean and a label
+  that turns with the jar. Each label is a texture on a three.js cylinder rendered once offscreen and
+  blitted into the jar's own canvas, so eight jars share one WebGL context.
+- **Shared-element page transition.** Clicking a jar flies it from the slider into the product
+  hero, then hands over to the page's own jar without a jump.
+- **Scroll-driven product page.** The title reveals letter by letter, the jar rises behind it and
+  turns with scroll (GSAP ScrollTrigger + Lenis), then a photo row, an info row with weight chips, an
+  Add to cart block with a sticky buy bar, and a draggable "other products" row whose cards pop
+  cut-paper motifs on hover.
+- **Pantry page.** A hero photo that grows to full bleed on scroll, one section per category with a
+  sticky pill nav that tracks the active section, quick-add cards that name the weight and price
+  they add, a spec table and an outro photo.
+- **Real cart and checkout.** Shopify Storefront API cart (create, add, update, remove) with Shopify
+  checkout; a mock adapter keeps every page working without a store.
+- **Two languages.** English at `/`, Vietnamese at `/vi`, with fonts that carry Vietnamese glyphs
+  (Noto Serif Display, Be Vietnam Pro).
+- **Accessibility.** `prefers-reduced-motion` turns off scroll-jacking and springs while keeping all
+  content reachable; 44px hit areas; WCAG contrast on small text; keyboard and screen-reader labels.
+
+## Stack
+
+Next.js 16 (App Router, Cache Components), React 19, TypeScript, CSS Modules, three.js 0.187, GSAP
+3.15, Lenis 1.3, Shopify Storefront API 2026-10. Tests: Vitest (unit) and Playwright (e2e on a
+production build, 1440 to 2560 desktop and 390 mobile). Jar labels are rendered from code
+(`npm run labels`); photos are AI-generated and composited with the rendered jars.
+
+## How it was built
+
+Design desktop-first at 1440 and checked at 1680, 1920 and 2560 with no dead zones; mobile at 390
+works fully. Every change went through a failing test first, a code review, and two independent UX
+audits against the reference's motion; the audit ledgers are in `.pi/`.
 
 ## Setup
 
