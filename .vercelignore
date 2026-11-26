@@ -1,0 +1,12 @@
+.env*
+!.env.example
+.pi
+AGENTS.md
+docs/REFERENCE.md
+docs/LANES.md
+.shots
+test-results
+playwright-report
+node_modules
+.next
+*.tsbuildinfo
