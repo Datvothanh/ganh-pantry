@@ -144,6 +144,13 @@
   opacity: 0.75;
 }
 
+/* Narrow cards: a subtitle may wrap; keep two lines so names in a row stay aligned. */
+@media (max-width: 820px) {
+  .sub {
+    min-height: calc(2 * 1.6em);
+  }
+}
+
 .meta {
   display: flex;
   justify-content: center;

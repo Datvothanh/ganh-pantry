@@ -526,6 +526,24 @@ test("the hero headline stays hidden until the cover reaches the top, then rever
   await expect.poll(unitShift).toBeGreaterThan(10);
 });
 
+test("the hero headline reveals fully inside the viewport, below the header", async ({ page }) => {
+  await page.goto("/pantry");
+  await hydrated(page);
+  const line = page.locator("[data-pantry-hero-line]");
+  await expect(line).toHaveAttribute("data-tr", "ready");
+  // Just past the reveal point: the cover's top a little above 25% of the viewport.
+  await page.evaluate(() => {
+    const cover = document.querySelector("[data-pantry-hero-media]")!;
+    const top = cover.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top - window.innerHeight * 0.24);
+  });
+  await expect(line).toHaveAttribute("data-tr", "played");
+  const header = (await page.locator("header").first().boundingBox())!;
+  const box = (await line.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(header.y + header.height);
+  expect(box.y + box.height).toBeLessThanOrEqual(900);
+});
+
 test("at 390px the covers have no inset animation", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/pantry");

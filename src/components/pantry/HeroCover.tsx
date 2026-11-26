@@ -14,8 +14,8 @@ const INSET_OVER = 100;
  * Hero cover. It starts inset by the page margin with rounded corners and is full bleed after
  * the first 100 px of scroll (`--cover-inset` 1 -> 0, scrubbed). The photo drifts -10 -> 10
  * yPercent while the cover leaves the viewport and settles from 1.18 to 1 once the intro is
- * done. The headline over it stays hidden and reveals char by char when the cover reaches the
- * top of the viewport, then sinks back when the page scrolls above that point again.
+ * done. The headline over it stays hidden and reveals char by char when the cover's top passes
+ * a quarter of the viewport, then sinks back when the page scrolls above that point again.
  */
 export function HeroCover({ children, line }: { children: ReactNode; line: readonly string[] }) {
   const cover = useRef<HTMLDivElement>(null);
@@ -43,10 +43,11 @@ export function HeroCover({ children, line }: { children: ReactNode; line: reado
     if (!el) return;
     const mm = gsap.matchMedia();
     mm.add(MOTION_OK, () => {
-      // Active from the moment the cover's top meets the viewport top, for the rest of the page.
+      // Active once the cover's top is a quarter of the way down the viewport: the headline
+      // (20% into the cover) then reveals around mid-screen instead of at the top edge.
       ScrollTrigger.create({
         trigger: el,
-        start: "top top",
+        start: "top 25%",
         end: "max",
         onToggle: (self) => setPlay(self.isActive),
         onRefresh: (self) => setPlay(self.isActive),

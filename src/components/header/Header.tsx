@@ -13,11 +13,14 @@ import styles from "./Header.module.css";
 
 /** Scroll depth (px) below which the bar always shows. */
 const HIDE_AFTER = 100;
+/** The logo only sits over the page top; past this depth big titles would run under it. */
+const LOGO_UNTIL = 24;
 
 export function Header({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   const [menuOpen, setMenuOpen] = useState(false);
   const [down, setDown] = useState(false);
+  const [atTop, setAtTop] = useState(true);
   const [dark, setDark] = useState(false);
   const { open: cartOpen } = useCart();
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -29,6 +32,7 @@ export function Header({ locale }: { locale: Locale }) {
     let last = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
+      setAtTop(y <= LOGO_UNTIL);
       if (y <= HIDE_AFTER) setDown(false);
       else if (Math.abs(y - last) >= 2) setDown(y > last);
       else return;
@@ -84,7 +88,7 @@ export function Header({ locale }: { locale: Locale }) {
         className={styles.header}
         data-site-header
         ref={headerRef}
-        data-condensed={down ? "1" : undefined}
+        data-condensed={down || !atTop ? "1" : undefined}
         data-hidden={hidden ? "1" : undefined}
         data-tone={dark ? "dark" : undefined}
         // Keyboard focus landing in the bar (e.g. focus returning from the menu) shows it.
