@@ -45,3 +45,9 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /.shots/
+
+# internal agent notes (local only)
+/.pi/
+/AGENTS.md
+/docs/REFERENCE.md
+/docs/LANES.md

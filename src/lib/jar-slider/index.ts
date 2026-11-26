@@ -1,7 +1,7 @@
 /**
  * Pure maths for the home jar slider: layout, marquee wrap, curved path, scale bulge,
  * depth filters, springs and input integration. No DOM access here so it stays unit-testable.
- * Numbers were tuned against the reference home slider (see docs/REFERENCE.md).
+ * Numbers were tuned by eye against the reference home slider's motion.
  */
 
 /** Jar photo aspect (height / width) of `public/jars/*.webp`. */

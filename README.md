@@ -6,7 +6,7 @@ real headless commerce flow in the same site.
 
 > Concept project, not a real brand. Design & development by Eric. Motion inspired by
 > [Agrumea Farm](https://agrumeafarm.it) by Studio K95. The reference was studied for its behaviour
-> (notes in `docs/REFERENCE.md`); the code, brand, copy, labels and images here are our own.
+> only; the code, brand, copy, labels and images here are our own.
 
 **Live demo:** see the repository's website link. Checkout runs on a Shopify development store
 (storefront password `ganh`, test payments only).
@@ -44,8 +44,7 @@ production build, 1440 to 2560 desktop and 390 mobile). Jar labels are rendered 
 
 Design desktop-first at 1440 and checked at 1680, 1920 and 2560 with no dead zones; mobile at 390
 works fully. Features and fixes were driven by Playwright tests on the production build, code
-review rounds, and two independent UX audits against the reference's motion; the review and audit
-ledgers are in `.pi/`.
+review rounds, and two independent UX audits against the reference's motion.
 
 ## Setup
 
