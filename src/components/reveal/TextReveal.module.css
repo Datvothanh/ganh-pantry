@@ -1,0 +1,69 @@
+/* Shared text reveal (see TextReveal.tsx). Server / no-JS / reduced-motion text is plain and
+   visible; the hidden state only exists under [data-tr], which JS sets after splitting. */
+
+.inner {
+  display: contents;
+}
+
+.partBlock {
+  display: block;
+}
+
+.lead {
+  font-weight: 600;
+}
+
+.word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Clipping mask. The vertical padding with an equal negative margin gives stacked Vietnamese
+   marks above caps (Ặ, Ễ, Ở) and descenders room without changing the layout box. */
+.mask {
+  --tr-pt: 0.45em;
+  --tr-pb: 0.25em;
+  display: inline-block;
+  padding: var(--tr-pt) 0.1em var(--tr-pb);
+  margin: calc(var(--tr-pt) * -1) -0.1em calc(var(--tr-pb) * -1);
+  overflow: hidden;
+  vertical-align: top;
+}
+
+/* Lines stay inline-blocks (as blocks their negative margins would collapse) but fill the row. */
+.maskLine {
+  width: 100%;
+  padding-inline: 0;
+  margin-inline: 0;
+}
+
+.unit {
+  display: inline-block;
+}
+
+.line {
+  display: block;
+  white-space: nowrap;
+}
+
+/* Hidden: pushed below the mask by the reference distance (yPercent) plus the overshoot,
+   so marks that poke above the glyph box never peek into the bottom padding. */
+[data-tr="ready"] .unit,
+[data-tr="ready"] .line {
+  transform: translateY(calc(var(--tr-from) * 1% + var(--tr-pt)));
+}
+
+[data-tr="played"] .unit,
+[data-tr="played"] .line {
+  transform: none;
+  transition: transform var(--tr-dur) var(--tr-ease)
+    calc(var(--tr-delay) + var(--i, 0) * var(--tr-stagger));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-tr] .unit,
+  [data-tr] .line {
+    transform: none;
+    transition: none;
+  }
+}

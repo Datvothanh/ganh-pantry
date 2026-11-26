@@ -30,7 +30,7 @@ async function firstRevealY(
         () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
       );
     }
-    return await page.locator("[data-reveal]").first().evaluate((el) => el.getBoundingClientRect().top + scrollY);
+    return await page.locator("[data-text-reveal='lines']").first().evaluate((el) => el.getBoundingClientRect().top + scrollY);
   } finally {
     await ctx.close();
   }

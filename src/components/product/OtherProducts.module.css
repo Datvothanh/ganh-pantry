@@ -14,10 +14,6 @@
   text-transform: uppercase;
 }
 
-.title > span {
-  display: block;
-}
-
 .track {
   display: flex;
   gap: var(--gap);

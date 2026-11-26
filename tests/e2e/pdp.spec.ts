@@ -20,7 +20,7 @@ const cards = (page: Page) => page.locator("[data-product-card]");
 const jarOverlap = (page: Page) =>
   page.evaluate(() => {
     const j = document.querySelector("[data-jar-target]")!.getBoundingClientRect();
-    const t = document.querySelector("[data-reveal]")!.getBoundingClientRect();
+    const t = document.querySelector("[data-text-reveal='lines']")!.getBoundingClientRect();
     return j.bottom - t.top;
   });
 
@@ -143,8 +143,25 @@ test.describe("reduced motion", () => {
     await page.waitForTimeout(300);
     expect(await jarTransform(page)).toBe(before);
     expect(await jarOverlap(page)).toBeLessThanOrEqual(0);
-    const word = page.locator("[data-reveal] [data-word]").first();
-    expect(Number(await word.evaluate((e) => getComputedStyle(e).opacity))).toBe(1);
+    // Reduced motion: text is never split or hidden.
+    const text = page.locator("[data-text-reveal='lines']").first();
+    await expect(text).toBeVisible();
+    await expect(page.locator("[data-text-reveal] [aria-hidden='true']")).toHaveCount(0);
+    await expect(page.locator("[data-text-reveal][data-tr]")).toHaveCount(0);
     await expect(cards(page)).toHaveCount(7);
   });
+});
+
+test("section titles and text reveal once they scroll into view", async ({ page }) => {
+  await page.goto("/products/mut-gung");
+  const title = page.locator("h2[data-text-reveal='chars']").last();
+  await expect(title).toHaveAttribute("data-tr", "ready");
+  await expect(title).toHaveText(/./);
+  await title.scrollIntoViewIfNeeded();
+  await expect(title).toHaveAttribute("data-tr", "played");
+  const last = title.locator("[aria-hidden='true'] > span > span").last();
+  await expect
+    .poll(() => last.evaluate((e) => getComputedStyle(e).transform), { timeout: 4000 })
+    .toMatch(/^none$|^matrix(1, 0, 0, 1, 0, 0)$/);
+  await expect(title).toBeVisible();
 });

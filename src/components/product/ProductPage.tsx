@@ -22,7 +22,7 @@ import { OtherProducts, type OtherCard } from "./OtherProducts";
 import { PhotoRow, type PhotoSlide } from "./PhotoRow";
 import { ProductHero } from "./ProductHero";
 import styles from "./ProductPage.module.css";
-import { RevealText } from "./RevealText";
+import { TextReveal } from "@/components/reveal";
 import { pdpStrings } from "./strings";
 
 const composite = (handle: string) => `/products/${handle}.webp`;
@@ -106,16 +106,16 @@ export async function ProductPage({
 
       <section className={styles.intro} key={`intro-${product.handle}`}>
         <span className={styles.rhombus} aria-hidden="true" />
-        <RevealText
+        <TextReveal
           className={styles.description}
           text={product.description[locale]}
         />
         <div className={styles.after}>
-          <RevealText
+          <TextReveal
             lead={`${t.ingredients}:`}
             text={product.ingredients[locale]}
           />
-          <RevealText
+          <TextReveal
             lead={`${t.storage}:`}
             text={product.storage[locale]}
             className={styles.small}

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useCursorLabel } from "@/components/cursor";
 import { MotifSvg } from "@/components/motifs";
+import { TextReveal } from "@/components/reveal";
 import { prefersReducedMotion } from "@/components/motion/useReducedMotion";
 import type { Motif } from "@/content/products";
 import { useLocale } from "@/components/shell/LocaleProvider";
@@ -206,9 +207,7 @@ export function OtherProducts({ title, cards, discover }: Props) {
 
   return (
     <section className={styles.section} data-other-products="">
-      <h2 className={styles.title}>
-        <span>{title[0]}</span> <span>{title[1]}</span>
-      </h2>
+      <TextReveal as="h2" mode="chars" className={styles.title} text={title} />
       <div
         ref={track}
         className={styles.track}

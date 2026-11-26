@@ -275,7 +275,7 @@ for (const size of [
     await page.goto("/products/mut-quat");
     await settle(page);
     const columns = {
-      description: "section:has(> [data-reveal])",
+      description: "section:has(> [data-text-reveal='lines'])",
       spec: "section:has([data-weight])",
       "other-products track": "[data-other-track]",
     };

@@ -398,3 +398,30 @@ test("at 390px the pill bar stays up through the four sections and hides at the 
   });
   await expect(page.locator("[data-pantry-nav][data-shown]")).toHaveCount(0);
 });
+
+test("titles and text rise in: the h1 on load, section copy once scrolled to", async ({ page }) => {
+  await page.goto("/pantry");
+  const h1 = page.locator("h1[data-text-reveal='chars']");
+  await expect(h1).toHaveAttribute("data-tr", "played");
+  await expect(h1).toHaveAttribute("aria-label", /pantry/i);
+  const title = page.locator("#pantry-specs");
+  await expect(title).toHaveAttribute("data-tr", "ready");
+  await title.scrollIntoViewIfNeeded();
+  await expect(title).toHaveAttribute("data-tr", "played");
+  const lines = page.locator("[data-pantry-section] p[data-text-reveal='lines']");
+  expect(await lines.count()).toBeGreaterThan(0);
+  const first = lines.first();
+  await first.scrollIntoViewIfNeeded();
+  await expect(first).toHaveAttribute("data-tr", "played");
+  await expect(first).toBeVisible();
+});
+
+test.describe("reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("the pantry text is never split or hidden", async ({ page }) => {
+    await page.goto("/pantry");
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.locator("[data-text-reveal][data-tr]")).toHaveCount(0);
+    await expect(page.locator("[data-text-reveal] [aria-hidden='true']")).toHaveCount(0);
+  });
+});

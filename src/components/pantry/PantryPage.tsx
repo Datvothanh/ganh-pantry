@@ -13,7 +13,7 @@ import {
 import { MotifSvg } from "@/components/motifs";
 import type { OtherCard } from "@/components/product/OtherProducts";
 import { buyCopy } from "@/components/product/buy";
-import { RevealText } from "@/components/product/RevealText";
+import { TextReveal } from "@/components/reveal";
 import { getLiveProduct } from "@/lib/commerce/live";
 import { quickAddTarget } from "@/lib/commerce/variants";
 import { href } from "@/lib/i18n";
@@ -134,7 +134,7 @@ function Weights({ list, t, center }: { list: Product[]; t: PantryStrings; cente
       className={`${styles.weightsBlock}${center ? ` ${styles.weightsCenter}` : ""}`}
       data-pantry-weights=""
     >
-      <p className={styles.weightsLabel}>{t.weights}</p>
+      <TextReveal className={styles.weightsLabel} text={t.weights} />
       <ul className={styles.weights}>
         {weights.map((w) => (
           <li key={w} className={styles.weight}>
@@ -184,7 +184,13 @@ export async function PantryPage({ locale }: { locale: Locale }) {
   return (
     <main className={styles.page} data-pantry="">
       <header className={styles.hero}>
-        <h1 className={styles.heroTitle}>{t.title}</h1>
+        <TextReveal
+          as="h1"
+          mode="chars"
+          trigger="load"
+          className={styles.heroTitle}
+          text={t.title}
+        />
         <HeroGrow>
           {heroPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element -- optional local photo
@@ -218,7 +224,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
 
       <section className={styles.intro}>
         <span className={styles.rhombus} aria-hidden="true" />
-        <RevealText className={styles.introText} text={t.intro} />
+        <TextReveal className={styles.introText} text={t.intro} />
         <span className={styles.rhombus} aria-hidden="true" />
       </section>
 
@@ -242,13 +248,14 @@ export async function PantryPage({ locale }: { locale: Locale }) {
               aria-labelledby={`${c.id}-title`}
             >
               <div className={styles.darkStage}>
-                <h2
+                <TextReveal
+                  as="h2"
+                  mode="chars"
                   id={`${c.id}-title`}
                   className={styles.darkTitle}
                   style={{ "--chars": [...name].length } as CSSProperties}
-                >
-                  {name}
-                </h2>
+                  text={name}
+                />
                 <Scattered
                   items={list.flatMap((p, i) => [
                     { motif: p.motif, x: i ? 80 : 18, y: 52, s: 2.2, r: i ? 18 : -22, color: p.colors.accent },
@@ -263,7 +270,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                 </div>
               </div>
               <div className={styles.darkDetails}>
-                <RevealText className={styles.text} text={c.intro[locale]} />
+                <TextReveal className={styles.text} text={c.intro[locale]} />
                 <Weights list={list} t={t} center />
               </div>
               <PantryGrid cards={cardsFor(list)} discover={dict.cursor.discover} locale={locale} />
@@ -280,9 +287,13 @@ export async function PantryPage({ locale }: { locale: Locale }) {
             data-pantry-section=""
             aria-labelledby={`${c.id}-title`}
           >
-            <h2 id={`${c.id}-title`} className={styles.title}>
-              {name}
-            </h2>
+            <TextReveal
+              as="h2"
+              mode="chars"
+              id={`${c.id}-title`}
+              className={styles.title}
+              text={name}
+            />
             <div className={`${styles.body} ${asideFirst ? styles.asideFirst : ""}`}>
               <div className={styles.media} data-pantry-feature="">
                 {sectionPhoto ? (
@@ -292,7 +303,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                 )}
               </div>
               <div className={styles.aside}>
-                <RevealText className={styles.text} text={c.intro[locale]} />
+                <TextReveal className={styles.text} text={c.intro[locale]} />
                 <Weights list={list} t={t} />
               </div>
             </div>
@@ -302,10 +313,14 @@ export async function PantryPage({ locale }: { locale: Locale }) {
       })}
 
       <section className={styles.specs} aria-labelledby="pantry-specs" data-pantry-end="">
-        <h2 id="pantry-specs" className={styles.title}>
-          <span>{t.tableTitle[0]}</span> <span>{t.tableTitle[1]}</span>
-        </h2>
-        <p className={styles.specsText}>{t.tableIntro}</p>
+        <TextReveal
+          as="h2"
+          mode="chars"
+          id="pantry-specs"
+          className={styles.title}
+          text={t.tableTitle}
+        />
+        <TextReveal className={styles.specsText} text={t.tableIntro} />
         <table className={styles.table}>
           <thead>
             <tr className={styles.headRow}>
