@@ -133,6 +133,7 @@
 .big {
   display: inline-block;
   font-family: var(--font-display), serif;
+  font-variation-settings: var(--display-fvs);
   font-weight: 300;
   font-size: clamp(64px, 10.5vw, 220px);
   line-height: 0.92;
@@ -218,18 +219,19 @@
 
 .vi {
   font-family: var(--font-display), serif;
+  font-variation-settings: var(--display-fvs);
   font-size: 22px;
   line-height: 1;
 }
 
 .en {
-  font-size: 12px;
+  font-size: 13px;
   opacity: 0.7;
 }
 
 .credit {
   max-width: 64ch;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   opacity: 0.65;
 }

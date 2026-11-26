@@ -88,6 +88,7 @@
 .badgeText {
   fill: var(--c-flame);
   font-family: var(--font-display), serif;
+  font-variation-settings: var(--display-fvs);
   font-weight: 300;
   letter-spacing: 0.02em;
   white-space: pre;
@@ -102,8 +103,8 @@
   bottom: calc(30px + var(--footer-strip-h, 0px));
   z-index: 3;
   color: var(--c-cream);
-  font: 400 13px/1.2 var(--font-display), serif;
-  letter-spacing: 0.12em;
+  font: 600 13px/1.2 var(--font-text), sans-serif;
+  letter-spacing: 0.1em;
   text-align: center;
   text-transform: uppercase;
   pointer-events: none;

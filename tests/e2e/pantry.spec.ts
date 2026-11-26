@@ -252,26 +252,23 @@ test("every weight on /pantry uses the variant label", async ({ page }) => {
   await expect(page.locator("[data-spec-row]").first()).toContainText("220 g");
 });
 
-const heroBox = (page: Page) =>
-  page.locator("[data-pantry-hero-media]").evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    return { width: r.width, vw: document.documentElement.clientWidth };
-  });
+/** Scrubbed side inset of a cover frame (1 = inset card, 0 = full bleed), read from its CSS var. */
+const coverInset = (page: Page, selector = "[data-pantry-hero-media]") =>
+  page
+    .locator(selector)
+    .evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue("--cover-inset")));
+
+const mediaTransform = (page: Page, selector: string) =>
+  page.locator(selector).evaluate((el) => getComputedStyle(el.parentElement!).transform);
 
 test("the hero photo grows to full width on scroll with a headline over it", async ({
   page,
 }) => {
   await page.goto("/pantry");
   await hydrated(page);
-  const start = await heroBox(page);
-  expect(start.width).toBeLessThan(start.vw - 20);
+  expect(await coverInset(page)).toBeGreaterThan(0.9);
   await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.6));
-  await expect
-    .poll(async () => {
-      const b = await heroBox(page);
-      return b.vw - b.width;
-    })
-    .toBeLessThanOrEqual(1);
+  await expect.poll(() => coverInset(page)).toBeLessThanOrEqual(0.01);
 
   for (const [path, re] of [
     ["/pantry", /from our kitchens,\s*one jar at a time/i],
@@ -295,8 +292,8 @@ test("reduced motion shows the hero photo at full width", async ({ browser }) =>
   const page = await ctx.newPage();
   await page.goto("http://127.0.0.1:" + (process.env.E2E_PORT || 3100) + "/pantry");
   await hydrated(page);
-  const b = await heroBox(page);
-  expect(b.vw - b.width).toBeLessThanOrEqual(1);
+  expect(await coverInset(page)).toBe(0);
+  expect(await coverInset(page, "[data-pantry-outro] > div")).toBe(0);
   await ctx.close();
 });
 
@@ -423,5 +420,137 @@ test.describe("reduced motion", () => {
     await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator("[data-text-reveal][data-tr]")).toHaveCount(0);
     await expect(page.locator("[data-text-reveal] [aria-hidden='true']")).toHaveCount(0);
+  });
+});
+
+// ---------- image scroll motion ----------
+
+const scrollTo = async (page: Page, y: number) => {
+  await page.evaluate((top) => window.scrollTo(0, top), y);
+  await twoFrames(page);
+};
+
+test("the hero cover is an inset card at the top and full bleed after 150px of scroll", async ({
+  page,
+}) => {
+  await page.goto("/pantry");
+  await hydrated(page);
+  const clip = await page
+    .locator("[data-pantry-hero-media]")
+    .evaluate((el) => getComputedStyle(el).clipPath);
+  expect(clip).toMatch(/round/);
+  expect(await coverInset(page)).toBeGreaterThan(0.99);
+  await scrollTo(page, 50);
+  await expect.poll(() => coverInset(page)).toBeGreaterThan(0.3);
+  expect(await coverInset(page)).toBeLessThan(0.7);
+  await scrollTo(page, 150);
+  await expect.poll(() => coverInset(page)).toBe(0);
+  await scrollTo(page, 0);
+  await expect.poll(() => coverInset(page)).toBeGreaterThan(0.99);
+});
+
+test("a section cover photo moves with the scroll and never shows an edge", async ({ page }) => {
+  await page.goto("/pantry");
+  await hydrated(page);
+  const media = "#preserves [data-pantry-feature] img";
+  const place = async (fraction: number) => {
+    await page.evaluate((f) => {
+      const el = document.querySelector("#preserves [data-pantry-feature] figure")!;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, top - window.innerHeight * f);
+    }, fraction);
+    await twoFrames(page);
+  };
+  await place(0.9);
+  const early = await mediaTransform(page, media);
+  await place(0.1);
+  await expect.poll(() => mediaTransform(page, media)).not.toBe(early);
+  // The frame stays covered: the media box always overhangs both edges.
+  for (const f of [0.9, 0.5, 0.1]) {
+    await place(f);
+    const covered = await page.locator(media).evaluate((img) => {
+      const box = img.parentElement!.getBoundingClientRect();
+      const frame = img.closest("figure")!.getBoundingClientRect();
+      return box.top <= frame.top + 0.5 && box.bottom >= frame.bottom - 0.5;
+    });
+    expect(covered, `at ${f}`).toBe(true);
+  }
+});
+
+test("the spec-table cover and the Sauces front jar move on scroll", async ({ page }) => {
+  await page.goto("/pantry");
+  await hydrated(page);
+  const spec = "#pantry-specs ~ figure img";
+  await expect(page.locator(spec)).toHaveCount(1);
+  const jar = "[data-pantry-dark-stage] > div > div img";
+  const centre = (selector: string, f: number) =>
+    page.evaluate(
+      ([sel, frac]) => {
+        const el = document.querySelector(String(sel))!;
+        const frame = (el.closest("figure") ?? el.closest("[data-pantry-dark-stage]"))!;
+        window.scrollTo(0, frame.getBoundingClientRect().top + window.scrollY - window.innerHeight * Number(frac));
+      },
+      [selector, f] as const,
+    );
+  for (const selector of [spec, jar]) {
+    await centre(selector, 0.8);
+    await twoFrames(page);
+    const a = await mediaTransform(page, selector);
+    await centre(selector, 0.2);
+    await twoFrames(page);
+    await expect.poll(() => mediaTransform(page, selector)).not.toBe(a);
+  }
+});
+
+test("the hero headline stays hidden until the cover reaches the top, then reverses", async ({
+  page,
+}) => {
+  await page.goto("/pantry");
+  await hydrated(page);
+  const line = page.locator("[data-pantry-hero-line]");
+  await expect(line).toHaveAttribute("data-tr", "ready");
+  const unitShift = () =>
+    line.evaluate((el) => {
+      const unit = el.querySelector<HTMLElement>("[style*=\"--i\"]")!;
+      return new DOMMatrixReadOnly(getComputedStyle(unit).transform).m42;
+    });
+  expect(await unitShift()).toBeGreaterThan(10);
+  await page.evaluate(() => {
+    const cover = document.querySelector("[data-pantry-hero-media]")!;
+    window.scrollTo(0, cover.getBoundingClientRect().top + window.scrollY + 20);
+  });
+  await expect(line).toHaveAttribute("data-tr", "played");
+  await expect.poll(unitShift).toBeLessThanOrEqual(0.5);
+  await scrollTo(page, 0);
+  await expect(line).toHaveAttribute("data-tr", "ready");
+  await expect.poll(unitShift).toBeGreaterThan(10);
+});
+
+test("at 390px the covers have no inset animation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/pantry");
+  await hydrated(page);
+  expect(await coverInset(page)).toBe(0);
+  await scrollTo(page, 60);
+  expect(await coverInset(page)).toBe(0);
+});
+
+test.describe("reduced motion media", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("no parallax transform on any cover and the headline stays visible", async ({ page }) => {
+    await page.goto("/pantry");
+    await hydrated(page);
+    await scrollTo(page, 600);
+    const transforms = await page
+      .locator("[data-pantry] img")
+      .evaluateAll((imgs) =>
+        imgs
+          .filter((img) => img.closest("figure, [data-pantry-hero-media], [data-pantry-outro]"))
+          .map((img) => getComputedStyle(img.parentElement!).transform),
+      );
+    expect(transforms.length).toBeGreaterThan(3);
+    for (const t of transforms) expect(t).toBe("none");
+    await expect(page.locator("[data-pantry-hero-line]")).not.toHaveAttribute("data-tr", /.*/);
+    await expect(page.locator("[data-pantry-hero-line]")).toBeVisible();
   });
 });

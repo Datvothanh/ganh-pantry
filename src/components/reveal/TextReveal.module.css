@@ -60,6 +60,13 @@
     calc(var(--tr-delay) + var(--i, 0) * var(--tr-stagger));
 }
 
+/* Manual mode runs back: the units sink out again, a little faster than they rose. */
+[data-tr-manual][data-tr="ready"] .unit,
+[data-tr-manual][data-tr="ready"] .line {
+  transition: transform calc(var(--tr-dur) * 0.6) var(--tr-ease)
+    calc(var(--i, 0) * var(--tr-stagger) * 0.5);
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-tr] .unit,
   [data-tr] .line {

@@ -4,7 +4,7 @@
   color: var(--c-cream);
   padding: clamp(40px, min(7vw, 6vh), 150px) var(--pad) 22px;
   overflow: hidden;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.55;
 }
 
@@ -15,19 +15,20 @@
   padding-left: 25.4vw;
   color: var(--c-flame);
   font-family: var(--font-display), serif;
+  font-variation-settings: var(--display-fvs);
   line-height: 0.82;
   user-select: none;
 }
 
 .word {
-  font-weight: 400;
+  font-weight: 300;
   /* min(vw, vh) keeps the whole footer within one screen on wide, short viewports. */
   font-size: min(23.5vw, 27vh);
   letter-spacing: -0.035em;
 }
 
 .tag {
-  font-style: italic;
+  font-variation-settings: var(--display-fvs-slant);
   font-weight: 300;
   font-size: min(8.4vw, 9.6vh);
   letter-spacing: -0.02em;
@@ -48,7 +49,7 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 40px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
   padding-right: 24px;
 }
@@ -65,7 +66,7 @@
 .label {
   color: var(--c-flame-light);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -106,7 +107,7 @@
 
 .note {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: 13px;
   opacity: 0.55;
 }
 
@@ -135,7 +136,7 @@
 }
 
 .credit {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   opacity: 0.8;
 }
@@ -183,7 +184,7 @@
   padding: 8px var(--pad);
   background: var(--c-lacquer);
   color: var(--c-cream);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.35;
 }
 

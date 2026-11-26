@@ -128,7 +128,7 @@
 .label {
   margin: 0;
   color: var(--c-red);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -137,7 +137,7 @@
 .value {
   margin: 14px 0 0;
   color: var(--c-lacquer);
-  font-size: 15px;
+  font-size: 17px;
 }
 
 @media (max-width: 1024px) {

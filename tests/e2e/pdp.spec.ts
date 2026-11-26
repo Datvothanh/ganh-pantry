@@ -87,8 +87,20 @@ test("hovering a card pops its motif, clicking navigates", async ({ page }) => {
 
 test("other-products row can be dragged", async ({ page }) => {
   await page.goto("/products/mut-gung");
+  // Hydrated and the route-change scroll reset has run, so it cannot move the track mid-drag.
+  await expect(jar(page)).toHaveAttribute("data-hero-ready", "true", { timeout: 10_000 });
   const track = page.locator("[data-other-track]");
   await track.scrollIntoViewIfNeeded();
+  // Smooth scroll keeps easing after scrollIntoView: drag only once the track has settled.
+  let last = -1;
+  await expect
+    .poll(async () => {
+      const top = Math.round((await track.boundingBox())!.y);
+      const settled = top === last;
+      last = top;
+      return settled;
+    }, { intervals: [150] })
+    .toBe(true);
   const box = (await track.boundingBox())!;
   const y = box.y + box.height / 2;
   await page.mouse.move(box.x + box.width * 0.7, y);

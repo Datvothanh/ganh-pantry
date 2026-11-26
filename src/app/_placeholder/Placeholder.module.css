@@ -16,6 +16,6 @@
 
 .sub {
   font-family: var(--font-display), serif;
-  font-style: italic;
+  font-variation-settings: var(--display-fvs-slant);
   font-size: clamp(18px, 2vw, 28px);
 }

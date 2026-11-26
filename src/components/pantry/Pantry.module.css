@@ -1,10 +1,13 @@
 .page {
   --gap: 15px;
-  --hero-size: clamp(3.2rem, calc(1.6rem + 5.2vw), 10rem);
+  /* Section titles: ~130px at 1440 like the reference; the page title ~185px. */
+  --hero-size: clamp(3.2rem, 9vw, 14rem);
   --space-l: clamp(40px, 4.5vw, 90px);
   --space-xl: clamp(90px, 10vw, 200px);
   --radius: clamp(14px, 1.6vw, 28px);
   --text-medium: clamp(1rem, calc(0.85rem + 0.32vw), 1.35rem);
+  /* Page margin the covers are inset by while they enter (see .heroCover / .outroCover). */
+  --cover-margin: 40px;
   padding-bottom: clamp(40px, 5vw, 90px);
 }
 
@@ -16,38 +19,61 @@
 
 .heroTitle {
   color: var(--c-red);
-  font-size: calc(var(--hero-size) * 1.15);
-  font-weight: 400;
+  font-size: clamp(4rem, 12.85vw, 24rem);
+  font-weight: 300;
   line-height: 0.92;
   text-align: center;
   text-transform: uppercase;
 }
 
-/* Full-bleed box; the frame inside grows from an inset card (--grow 0) to the
-   full width (--grow 1) as the page scrolls (HeroGrow). No layout shift. */
-.heroMedia {
-  --grow: 0;
+/* Media frames: the media box is taller than its frame (inset -14% 0) so the scroll parallax
+   (yPercent, see lib/parallax) never shows an edge. */
+.pxFrame {
   position: relative;
-  margin: clamp(24px, 3vw, 56px) calc(var(--pad) * -1) 0;
-  aspect-ratio: 1440 / 660;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-.heroFrame {
+.pxMedia {
   position: absolute;
-  inset: 0 calc(var(--pad) * (1 - var(--grow)));
+  inset: -14% 0;
+  will-change: transform;
+}
+
+/* Full-bleed cover (negative page padding). `--cover-inset` 1 -> 0 is scrubbed by HeroCover over
+   the first 100 px of scroll: the clip-path drops the page margin and the rounded corners.
+   The box itself never changes size, so nothing shifts. */
+.heroCover {
+  --cover-inset: 1;
+  position: relative;
+  /* Tall like the reference, but capped by width so our wide hero photo is not blown up. */
+  height: min(130vh, 62vw);
+  margin: clamp(24px, 3vw, 56px) calc(var(--pad) * -1) 0;
   overflow: hidden;
-  border-radius: calc(var(--radius) * (1 - var(--grow)));
+  clip-path: inset(
+    0 calc(var(--cover-margin) * var(--cover-inset)) round calc(var(--radius) * var(--cover-inset))
+  );
   background: var(--c-lacquer);
   isolation: isolate;
 }
 
+/* The photo settles from 1.18 to 1 once the intro is done. */
+.heroCover > .pxMedia > * {
+  transform: scale(1.18);
+  transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.heroCover[data-revealed] > .pxMedia > * {
+  transform: none;
+}
+
 /* Soft shade so the headline reads over any photo (the hero photo keeps its upper part clear). */
-.heroFrame::after {
+.heroCover::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: radial-gradient(60% 45% at 50% 27%, rgb(43 26 20 / 0.34), transparent 100%);
+  background: radial-gradient(60% 45% at 50% 20%, rgb(43 26 20 / 0.34), transparent 100%);
   pointer-events: none;
 }
 
@@ -68,22 +94,20 @@
 
 .heroLine {
   position: absolute;
-  top: 27%;
+  /* Clear of the jar lids in the hero photo. */
+  top: 20%;
   left: 50%;
   z-index: 3;
   width: 90%;
   color: var(--c-cream);
   font-family: var(--font-display), serif;
-  font-size: clamp(1.8rem, calc(0.8rem + 3.4vw), 6rem);
+  font-variation-settings: var(--display-fvs);
+  font-size: clamp(2.2rem, calc(1.6rem + 5vw), 8rem);
   line-height: 0.95;
   text-align: center;
   text-shadow: 0 2px 24px rgb(43 26 20 / 0.35);
   text-transform: uppercase;
   transform: translate(-50%, -50%);
-}
-
-.heroLine > span {
-  display: block;
 }
 
 .heroJars {
@@ -205,8 +229,8 @@
   margin-inline: auto;
   color: var(--c-red);
   font-size: var(--hero-size);
-  font-weight: 400;
-  line-height: 0.92;
+  font-weight: 300;
+  line-height: 1;
   text-align: center;
   text-transform: uppercase;
 }
@@ -249,7 +273,7 @@
 
 .weightsLabel {
   color: var(--c-red);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -272,7 +296,7 @@
   border: 1px solid currentColor;
   border-radius: 50%;
   color: var(--c-lacquer);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -291,16 +315,22 @@
 }
 
 .cover {
-  position: relative;
   aspect-ratio: 1380 / 620;
-  overflow: hidden;
   border-radius: var(--radius);
 }
 
 .coverImg {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.specCover {
+  width: 100%;
+  max-width: min(83vw, 1200px);
+  margin-top: var(--space-l);
+  aspect-ratio: 1004 / 615;
 }
 
 /* ---------- card grid ---------- */
@@ -351,7 +381,7 @@
   color: var(--c-flame);
   /* Fill the width for short names, shrink by character count for long ones (~0.6em per glyph). */
   font-size: min(30rem, 19vw, calc(92vw / (var(--chars, 6) * 0.6)));
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1.12;
   text-align: center;
   text-transform: uppercase;
@@ -372,8 +402,12 @@
   align-items: flex-end;
 }
 
+/* The front jar hangs below the stage floor so its base stays hidden through the whole
+   parallax rise (yPercent 3 -> -14 of a jar ~1.6x as tall as wide => 0.25 x width). */
 .darkBig {
-  width: 30%;
+  --jar-w: 30%;
+  width: var(--jar-w);
+  margin-bottom: calc(var(--jar-w) * -0.25);
 }
 
 .darkSide {
@@ -445,7 +479,7 @@
 .headRow th {
   border-bottom-color: var(--c-lacquer);
   color: var(--c-red);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -461,6 +495,7 @@
 
 .specName {
   font-family: var(--font-display), serif;
+  font-variation-settings: var(--display-fvs);
 }
 
 .specSub {
@@ -471,16 +506,20 @@
 /* ---------- outro ---------- */
 
 .outro {
-  --margin: 40px;
   margin-top: var(--space-xl);
 }
 
+/* Inset card while it enters, full bleed once centred (--cover-inset 1 -> 0, OutroCover). */
 .outroCover {
+  --cover-inset: 1;
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  clip-path: inset(0 var(--margin) round var(--radius));
+  clip-path: inset(
+    0 calc(var(--cover-margin) * var(--cover-inset)) round calc(var(--radius) * var(--cover-inset))
+  );
   background: var(--c-red);
+  isolation: isolate;
 }
 
 .outroImg {
@@ -559,7 +598,7 @@
   padding: 12px 20px;
   border-radius: 999px;
   color: var(--c-lacquer);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
   text-align: center;
@@ -617,8 +656,13 @@
     --cols: min(var(--n, 3), 3);
   }
 
-  .outro {
-    --margin: 30px;
+  .page {
+    --cover-margin: 30px;
+  }
+
+  .heroCover {
+    height: 60vh;
+    min-height: 360px;
   }
 
   .pill {
@@ -642,7 +686,13 @@
     grid-column: 1 / -1;
   }
 
-  .heroMedia {
+  .page {
+    --cover-margin: 20px;
+  }
+
+  .heroCover {
+    height: auto;
+    min-height: 0;
     aspect-ratio: 4 / 5;
   }
 
@@ -662,15 +712,11 @@
   }
 
   .darkBig {
-    width: 52%;
+    --jar-w: 52%;
   }
 
   .darkSide {
     width: 32%;
-  }
-
-  .outro {
-    --margin: 20px;
   }
 
   .outroCover {
@@ -692,7 +738,7 @@
 
   .pill {
     padding: 9px 12px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .table {
@@ -713,10 +759,28 @@
   }
 }
 
+/* Phones: the covers stay full bleed (no inset animation). */
+@media (max-width: 480px) {
+  .heroCover,
+  .outroCover {
+    --cover-inset: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  /* Static full width. */
-  .heroFrame {
-    --grow: 1;
+  /* Static full-bleed covers, no parallax (the scripts create none), no scale-in. */
+  .heroCover,
+  .outroCover {
+    --cover-inset: 0;
+  }
+
+  .heroCover > .pxMedia > * {
+    transform: none;
+    transition: none;
+  }
+
+  .pxMedia {
+    will-change: auto;
   }
 
   .heroJars > img {

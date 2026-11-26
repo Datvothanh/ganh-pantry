@@ -1,14 +1,18 @@
-import { Be_Vietnam_Pro, Noto_Serif_Display } from "next/font/google";
+import { Commissioner, Source_Sans_3 } from "next/font/google";
 
-export const display = Noto_Serif_Display({
-  weight: ["300", "400", "500"],
-  style: ["normal", "italic"],
+// Display: Commissioner variable (flared terminals + higher contrast are set via
+// font-variation-settings, see --display-fvs in globals.css). Free lookalike of IvyMode.
+export const display = Commissioner({
+  weight: "variable",
+  style: "normal",
+  axes: ["FLAR", "VOLM", "slnt"],
   subsets: ["latin", "vietnamese"],
   variable: "--font-display",
   display: "swap",
 });
 
-export const text = Be_Vietnam_Pro({
+// Text: Source Sans 3, free lookalike of IvyStyle Sans.
+export const text = Source_Sans_3({
   weight: ["400", "600"],
   subsets: ["latin", "vietnamese"],
   variable: "--font-text",

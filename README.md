@@ -29,7 +29,7 @@ real headless commerce flow in the same site.
 - **Real cart and checkout.** Shopify Storefront API cart (create, add, update, remove) with Shopify
   checkout; a mock adapter keeps every page working without a store.
 - **Two languages.** English at `/`, Vietnamese at `/vi`, with fonts that carry Vietnamese glyphs
-  (Noto Serif Display, Be Vietnam Pro).
+  (Commissioner with its flare and contrast axes for display, Source Sans 3 for text).
 - **Accessibility.** `prefers-reduced-motion` turns off scroll-jacking and springs while keeping all
   content reachable; 44px hit areas; WCAG contrast on small text; keyboard and screen-reader labels.
 

@@ -30,13 +30,20 @@ export interface TextRevealProps {
   as?: "p" | "h1" | "h2" | "h3" | "div" | "span";
   /** 'chars' rises letter by letter, 'lines' rises visual lines. */
   mode?: RevealMode;
-  /** 'scroll' plays once when the top crosses 91% of the viewport; 'load' plays after the intro. */
-  trigger?: "scroll" | "load";
+  /**
+   * 'scroll' plays once when the top crosses 91% of the viewport; 'load' plays after the intro;
+   * 'manual' follows the `play` prop and runs backwards when it turns false again.
+   */
+  trigger?: "scroll" | "load" | "manual";
+  /** Manual mode only: true reveals the text, false hides it again (the units sink back). */
+  play?: boolean;
   /** Extra delay in seconds before the first unit starts. */
   delay?: number;
   id?: string;
   className?: string;
   style?: CSSProperties;
+  /** Extra data-* attributes for the root element (hooks for tests / scripts). */
+  data?: Record<`data-${string}`, string>;
 }
 
 /** Calls `cb` once the loader intro is done (right away if it already ran); returns a canceller. */
@@ -145,12 +152,15 @@ export function TextReveal({
   as: Tag = "p",
   mode = "lines",
   trigger = "scroll",
+  play: playProp = false,
   delay = 0,
   id,
   className,
   style,
+  data,
 }: TextRevealProps) {
   const root = useRef<HTMLElement>(null);
+  const wantPlay = useRef(playProp);
   const inner = useRef<HTMLSpanElement>(null);
   const blocks = toBlocks(text, lead);
   const full = plainText(text, lead);
@@ -174,6 +184,8 @@ export function TextReveal({
     let ro: ResizeObserver | undefined;
     let cancelIntro = () => {};
     let width = 0;
+    const manual = trigger === "manual";
+    if (manual) host.dataset.trManual = "";
 
     const play = () => {
       if (played || !alive) return;
@@ -191,11 +203,11 @@ export function TextReveal({
       if (!alive) return;
       split();
       host.setAttribute("aria-label", full);
-      host.dataset.tr = played ? "played" : "ready";
+      host.dataset.tr = played || (manual && wantPlay.current) ? "played" : "ready";
       width = host.clientWidth;
 
       cancelIntro = whenIntroDone(() => {
-        if (!alive) return;
+        if (!alive || manual) return;
         if (trigger === "load") {
           raf = requestAnimationFrame(play);
           return;
@@ -245,9 +257,17 @@ export function TextReveal({
       if (built) box.replaceChildren(...original);
       host.removeAttribute("aria-label");
       delete host.dataset.tr;
+      delete host.dataset.trManual;
     };
     // `blocks` / `full` derive from `sig`.
   }, [sig, trigger, multi]);
+
+  // Manual mode: the parent drives the state, forwards and back.
+  useEffect(() => {
+    wantPlay.current = playProp;
+    const host = root.current;
+    if (trigger === "manual" && host?.dataset.tr) host.dataset.tr = playProp ? "played" : "ready";
+  }, [playProp, trigger]);
 
   const rootStyle = {
     "--tr-dur": `${cfg.duration}s`,
@@ -265,6 +285,7 @@ export function TextReveal({
       className={className}
       style={rootStyle}
       data-text-reveal={mode}
+      {...data}
     >
       <span key={sig} ref={inner} className={styles.inner}>
         {blocks.map((words, bi) => (

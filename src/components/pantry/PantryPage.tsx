@@ -18,7 +18,9 @@ import { getLiveProduct } from "@/lib/commerce/live";
 import { quickAddTarget } from "@/lib/commerce/variants";
 import { href } from "@/lib/i18n";
 import styles from "./Pantry.module.css";
-import { HeroGrow } from "./HeroGrow";
+import { HeroCover } from "./HeroCover";
+import { OutroCover } from "./OutroCover";
+import { ParallaxFrame, ParallaxItem } from "./Parallax";
 import { PantryGrid } from "./PantryGrid";
 import { PantryNav } from "./PantryNav";
 import { Reveal } from "./Reveal";
@@ -120,10 +122,14 @@ function CategoryComposite({ list, alt }: { list: Product[]; alt: string }) {
 
 function Media({ src, alt, ratio }: { src: string; alt: string; ratio?: string }) {
   return (
-    <figure className={styles.cover} style={ratio ? { aspectRatio: ratio } : undefined}>
+    <ParallaxFrame
+      as="figure"
+      className={styles.cover}
+      style={ratio ? { aspectRatio: ratio } : undefined}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element -- optional local photo */}
       <img src={src} alt={alt} className={styles.coverImg} loading="lazy" />
-    </figure>
+    </ParallaxFrame>
   );
 }
 
@@ -172,6 +178,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
 
   const heroPhoto = photo("pantry-hero");
   const outroPhoto = photo("pantry-outro");
+  const specPhoto = photo("mut-quat/20-mut-quat-ing-1");
   const heroScatter: Scatter[] = products.map((p, i) => ({
     motif: p.motif,
     x: 6 + i * 12.5,
@@ -191,7 +198,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
           className={styles.heroTitle}
           text={t.title}
         />
-        <HeroGrow>
+        <HeroCover line={t.heroLine}>
           {heroPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element -- optional local photo
             <img
@@ -216,10 +223,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
               </div>
             </div>
           )}
-          <p className={styles.heroLine} data-pantry-hero-line="">
-            <span>{t.heroLine[0]}</span> <span>{t.heroLine[1]}</span>
-          </p>
-        </HeroGrow>
+        </HeroCover>
       </header>
 
       <section className={styles.intro}>
@@ -247,7 +251,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
               data-header-dark=""
               aria-labelledby={`${c.id}-title`}
             >
-              <div className={styles.darkStage}>
+              <div className={styles.darkStage} data-pantry-dark-stage="">
                 <TextReveal
                   as="h2"
                   mode="chars"
@@ -266,7 +270,14 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                   {rest.map((p) => (
                     <Jar key={p.handle} product={p} className={styles.darkSide} />
                   ))}
-                  <Jar product={big} className={styles.darkBig} />
+                  <ParallaxItem
+                    className={styles.darkBig}
+                    frame="[data-pantry-dark-stage]"
+                    from={3}
+                    to={-14}
+                  >
+                    <Jar product={big} />
+                  </ParallaxItem>
                 </div>
               </div>
               <div className={styles.darkDetails}>
@@ -321,6 +332,12 @@ export async function PantryPage({ locale }: { locale: Locale }) {
           text={t.tableTitle}
         />
         <TextReveal className={styles.specsText} text={t.tableIntro} />
+        {specPhoto ? (
+          <ParallaxFrame as="figure" className={`${styles.cover} ${styles.specCover}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- optional local photo */}
+            <img src={specPhoto} alt="" className={styles.coverImg} loading="lazy" />
+          </ParallaxFrame>
+        ) : null}
         <table className={styles.table}>
           <thead>
             <tr className={styles.headRow}>
@@ -361,12 +378,12 @@ export async function PantryPage({ locale }: { locale: Locale }) {
 
       <Reveal className={styles.outro} data-pantry-outro="">
         {outroPhoto ? (
-          <div className={styles.outroCover}>
+          <OutroCover>
             {/* eslint-disable-next-line @next/next/no-img-element -- optional local photo */}
             <img src={outroPhoto} alt={t.outroAlt} className={styles.outroImg} loading="lazy" />
-          </div>
+          </OutroCover>
         ) : (
-          <div className={styles.outroCover} role="img" aria-label={t.outroAlt}>
+          <OutroCover label={t.outroAlt}>
             <div className={styles.outroImg}>
               <Scattered
                 items={products.map((p, i) => ({
@@ -384,7 +401,7 @@ export async function PantryPage({ locale }: { locale: Locale }) {
                 ))}
               </div>
             </div>
-          </div>
+          </OutroCover>
         )}
       </Reveal>
 
